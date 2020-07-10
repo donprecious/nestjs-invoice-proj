@@ -1,6 +1,14 @@
+import { UserRole } from './UserRole.entity';
 import { UserOrganization } from './userOrganization.entity';
 import { BaseEntity } from './../shared/entity/baseEntity';
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  ManyToMany,
+} from 'typeorm';
+import { Role } from './Role.entity';
 
 @Entity()
 export class User extends BaseEntity {
@@ -30,4 +38,10 @@ export class User extends BaseEntity {
     userOrganization => userOrganization.user,
   )
   userOrganization: UserOrganization[];
+
+  @OneToMany(
+    type => UserRole,
+    userRole => userRole.user,
+  )
+  userRoles: UserRole[];
 }

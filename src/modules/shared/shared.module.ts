@@ -1,8 +1,16 @@
-import { UserOrganizationRepository } from './../../services/organization/organizationService';
-import { UserRepository } from './../../services/userService';
+import {
+  RoleRepository,
+  UserRoleRepository,
+} from './../../services/role/roleService';
+import {
+  UserOrganizationRepository,
+  OrganizationInviteRepository,
+} from './../../services/organization/organizationService';
+
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm/dist/typeorm.module';
 import { OrganizationRepository } from 'src/services/organization/organizationService';
+import { UserRepository } from 'src/services/user/userService';
 
 @Module({
   imports: [
@@ -10,6 +18,9 @@ import { OrganizationRepository } from 'src/services/organization/organizationSe
       OrganizationRepository,
       UserRepository,
       UserOrganizationRepository,
+      RoleRepository,
+      UserRoleRepository,
+      OrganizationInviteRepository,
     ]),
   ],
   exports: [TypeOrmModule.forFeature()],

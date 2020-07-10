@@ -13,6 +13,7 @@ import { Connection } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { OrganizationModule } from './modules/organization/organization.module';
 import { SharedModule } from './modules/shared/shared.module';
+import { SeederModule } from './seeder/seeder/seeder.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { SharedModule } from './modules/shared/shared.module';
     }),
     SharedModule,
     OrganizationModule,
+    SeederModule,
   ],
   controllers: [AppController],
   providers: [

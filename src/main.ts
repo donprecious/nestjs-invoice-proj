@@ -1,3 +1,4 @@
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule } from '@nestjs/swagger/dist/swagger-module';
@@ -20,6 +21,18 @@ async function bootstrap() {
       transform: true,
     }),
   );
+  // const seeder = app.get(SeederService);
+  // seeder
+  //   .seed()
+  //   .then(d => console.log('seeder complete'))
+  //   .catch(err => console.log('error', err));
+  // NestFactory.createApplicationContext(SeederModule).then(appContext => {
+  //   console.log('seeding data');
+  //   const permissionRepo = appContext.get(SeederService);
+  //   permissionRepo.seed().then(data => {
+  //     console.log('seeding complete ', data);
+  //   });
+  // });
   await app.listen(3000);
 }
 bootstrap();

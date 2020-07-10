@@ -11,4 +11,6 @@ export class CreateOrganizationUserDto {
   @ValidateNested()
   @Type(() => CreateUserDto)
   user: CreateUserDto;
+
+  createdByOrgId: string;
 }
