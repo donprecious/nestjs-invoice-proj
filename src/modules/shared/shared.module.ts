@@ -4,7 +4,7 @@ import {
 } from './../../services/role/roleService';
 import {
   UserOrganizationRepository,
-  OrganizationInviteRepository,
+  OrganizationInviteRepository, InvitationRepository
 } from './../../services/organization/organizationService';
 
 import { Module } from '@nestjs/common';
@@ -21,6 +21,7 @@ import { UserRepository } from 'src/services/user/userService';
       RoleRepository,
       UserRoleRepository,
       OrganizationInviteRepository,
+      InvitationRepository
     ]),
   ],
   exports: [TypeOrmModule.forFeature()],

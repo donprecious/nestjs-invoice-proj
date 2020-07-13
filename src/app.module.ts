@@ -14,11 +14,14 @@ import { ConfigService } from '@nestjs/config';
 import { OrganizationModule } from './modules/organization/organization.module';
 import { SharedModule } from './modules/shared/shared.module';
 import { SeederModule } from './seeder/seeder/seeder.module';
+import { AutomapperModule } from 'nestjsx-automapper';
+import { IdentityModule } from './modules/identity/identity.module';
+import { AuthService } from './services/auth/auth.service';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
-
+    AutomapperModule.withMapper(),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -36,6 +39,7 @@ import { SeederModule } from './seeder/seeder/seeder.module';
     SharedModule,
     OrganizationModule,
     SeederModule,
+    IdentityModule,
   ],
   controllers: [AppController],
   providers: [
@@ -43,6 +47,7 @@ import { SeederModule } from './seeder/seeder/seeder.module';
     ApikeyValidatorService,
     AuthMiddleware,
     AppConfigService,
+    AuthService,
   ],
 })
 export class AppModule implements NestModule {

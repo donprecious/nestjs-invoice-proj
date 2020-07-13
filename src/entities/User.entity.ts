@@ -9,22 +9,28 @@ import {
   ManyToMany,
 } from 'typeorm';
 import { Role } from './Role.entity';
+import { AutoMap } from 'nestjsx-automapper';
 
 @Entity()
 export class User extends BaseEntity {
   @Column()
+  @AutoMap()
   firstName: string;
 
   @Column()
+  @AutoMap()
   lastName: string;
 
   @Column({ unique: true })
+  @AutoMap()
   email: string;
 
   @Column({ nullable: true })
+  @AutoMap()
   phone: string;
 
   @Column({ nullable: true })
+  @AutoMap()
   passwordHash?: string;
 
   @Column({ nullable: true })

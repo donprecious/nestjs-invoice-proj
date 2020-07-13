@@ -9,7 +9,7 @@ import {
 } from './../../../../services/role/roleService';
 import { UserOrganization } from './../../../../entities/userOrganization.entity';
 
-import { CreateOrganizationUserDto } from 'src/dto/create-organization-user.dto';
+import { CreateOrganizationUserDto } from 'src/dto/user/create-organization-user.dto';
 import {
   OrganizationRepository,
   UserOrganizationRepository,
@@ -27,7 +27,6 @@ import {
 import { ApiTags } from '@nestjs/swagger/dist/decorators/api-use-tags.decorator';
 import { Organization } from 'src/entities/organization.entity';
 import { User } from 'src/entities/User.entity';
-import { CreateOrganizationDto } from 'src/dto/create-organization.dto';
 import { UserRepository } from 'src/services/user/userService';
 
 @ApiTags('organization')
@@ -58,6 +57,7 @@ export class OrganizationController {
             'user with this email ' +
             userFound.email +
             '  already exist, use another one',
+          
         },
         HttpStatus.BAD_REQUEST,
       );
@@ -68,7 +68,7 @@ export class OrganizationController {
       user: user,
       organization: org,
     } as UserOrganization;
-    this.userOrgRepo.insert(userOrg);
+   await this.userOrgRepo.insert(userOrg);
 
     let rolename = userOrg.organization.type;
     if (rolename.toLowerCase() == roleTypes.supplier.toLowerCase()) {
@@ -107,4 +107,5 @@ export class OrganizationController {
     // todo send email to this user with invitation link
     return AppResponse.OkSuccess(createUserOrg);
   }
+
 }

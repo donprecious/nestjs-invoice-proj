@@ -1,3 +1,5 @@
+import { HttpStatus } from '@nestjs/common';
+
 export const responseStatus = {
   success: 'success',
   fail: 'failed',
@@ -18,5 +20,19 @@ export class AppResponse {
       status: responseStatus.fail,
     };
     return res;
+  }
+  static NotFound(message = '') {
+    const res = {
+      message: message,
+      status: responseStatus.fail,
+    };
+    return res;
+  }
+
+  static badRequest(errors) {
+    return {
+      status: HttpStatus.BAD_REQUEST,
+      error: errors,
+    };
   }
 }

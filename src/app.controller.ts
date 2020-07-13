@@ -1,4 +1,4 @@
-import { CreateOrganizationDto } from './dto/create-organization.dto';
+import { CreateOrganizationDto } from './dto/organization/create-organization.dto';
 import { Controller, Get, Body, Post } from '@nestjs/common';
 import { AppService } from './app.service';
 
