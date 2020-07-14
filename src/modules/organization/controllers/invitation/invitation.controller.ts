@@ -122,18 +122,7 @@ export class InvitationController {
         HttpStatus.BAD_REQUEST,
       );
     }
-    // if (
-    //   invite.confirmationType !== roleTypes.supplierAdmin ||
-    //   invite.confirmationType !== roleTypes.buyerAdmin
-    // ) {
-    //   console.log('siii');
-    //   throw new HttpException(
-    //     AppResponse.badRequest(
-    //       'invalid invite, should be an admin user for supplier or buyer',
-    //     ),
-    //     HttpStatus.BAD_REQUEST,
-    //   );
-    // } else {
+
     let updatedOrganisation = invite.organization;
     updatedOrganisation.address = confirmUserOrg.orgainzation.address;
     updatedOrganisation.bankNumber = confirmUserOrg.orgainzation.bankNumber;
@@ -155,11 +144,15 @@ export class InvitationController {
 
     invite.status = invitationStatus.accepted;
     await this.invitationRepo.update(invite.id, invite);
+    const userDto = userToUpdate as UserDto;
+    userDto.id = updateUser.id;
 
+    const orgDto = confirmUserOrg.orgainzation as OrganizationDto;
+    orgDto.id = updatedOrganisation.id;
     return AppResponse.OkSuccess(
       {
-        orgainization: confirmUserOrg,
-        user: userToUpdate,
+        orgainization: userDto,
+        user: orgDto,
       },
       'invitation accepted and confirmed',
     );
@@ -201,8 +194,11 @@ export class InvitationController {
       await this.userRepo.update(invite.user.id, updateUser);
       invite.status = invitationStatus.accepted;
       await this.invitationRepo.update(invite.id, invite);
+
+      const userDto = userToUpdate as UserDto;
+      userDto.id = updateUser.id;
       return AppResponse.OkSuccess(
-        userToUpdate,
+        userDto,
         'invitation accepted and confirmed',
       );
     }

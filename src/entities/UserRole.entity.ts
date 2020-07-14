@@ -19,6 +19,4 @@ export class UserRole extends BaseEntity {
 
   @ManyToOne(type => Role)
   role: Role;
-
-
 }
