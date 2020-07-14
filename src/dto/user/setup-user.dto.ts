@@ -1,6 +1,4 @@
-import { IsNotEmpty, IsString, isString } from 'class-validator';
-import { AutoMap } from 'nestjsx-automapper';
-import { EntityDto } from '../entityDto.shated';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class SetupUserDto {
   @IsString()

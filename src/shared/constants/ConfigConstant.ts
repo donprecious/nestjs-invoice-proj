@@ -6,4 +6,5 @@ export const ConfigConstant = {
     password: 'DATABASE_PASSWORD',
     name: 'DATABASE_NAME',
   },
+  jwtSecret: 'JWT_SECRET',
 };
