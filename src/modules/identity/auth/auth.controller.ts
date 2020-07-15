@@ -1,13 +1,25 @@
+import { IsEmail } from 'class-validator';
 import { UserOrganizationRepository } from './../../../services/organization/organizationService';
 import { LoginDto } from './../../../dto/auth/login.dto';
 import { UserRepository } from './../../../services/user/userService';
 import { ApiTags } from '@nestjs/swagger/dist/decorators';
-import { BadRequestException, Body, Controller, Post } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  ValidationPipe,
+} from '@nestjs/common';
 import { SetupUserDto } from 'src/dto/user/setup-user.dto';
 
 import { AppResponse } from 'src/shared/helpers/appresponse';
 import { compare, hash } from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { randomBytes } from 'crypto';
+import moment = require('moment');
+
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
@@ -74,5 +86,22 @@ export class AuthController {
     // generate token here
     const token = this.jwtService.sign(payload);
     return AppResponse.OkSuccess({ token, payload });
+  }
+
+  @Get('password/forgot/:email')
+  async forgetPassword(@Param('email') email: string) {
+    const findUser = await this.userRepo.findOne({
+      where: { email: email },
+    });
+    if (!findUser) {
+      return AppResponse.OkSuccess(
+        null,
+        'email sent!, if you have an account with us, you will recieve it ',
+      );
+    }
+    const token = randomBytes(20).toString('hex');
+    findUser.resetPasswordToken = token ; 
+    const time = moment().add(5, 'minutes')
+    return token;
   }
 }
