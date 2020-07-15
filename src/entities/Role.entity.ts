@@ -1,4 +1,4 @@
-import { UserRole } from './UserRole.entity';
+import { UserRole } from "./UserRole";
 import { BaseEntity } from '../shared/entity/baseEntity';
 import {
   Entity,
