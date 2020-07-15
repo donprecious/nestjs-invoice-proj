@@ -38,6 +38,7 @@
     "bcrypt": "^5.0.0",
     "class-transformer": "^0.2.3",
     "class-validator": "^0.12.2",
+    "moment": "^2.27.0",
     "mysql": "^2.18.1",
     "nestjsx-automapper": "^3.0.16",
     "passport": "^0.4.1",
