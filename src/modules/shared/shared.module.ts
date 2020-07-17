@@ -1,3 +1,6 @@
+import { InvoiceRepository } from './../../services/invoice/invoice';
+import { ConfigModule } from '@nestjs/config/dist/config.module';
+import { EmailService } from './../../services/notification/email/email.service';
 import {
   RoleRepository,
   UserRoleRepository,
@@ -8,14 +11,15 @@ import {
   InvitationRepository,
 } from './../../services/organization/organizationService';
 
-import { Module } from '@nestjs/common';
+import { HttpModule, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm/dist/typeorm.module';
 import { OrganizationRepository } from 'src/services/organization/organizationService';
 import { UserRepository } from 'src/services/user/userService';
+import { JwtStrategy } from '../identity/jwt.strategy';
+import { JwtAuthGuard } from '../identity/auth/jwtauth.guard';
 
 @Module({
   imports: [
-    
     TypeOrmModule.forFeature([
       OrganizationRepository,
       UserRepository,
@@ -24,9 +28,19 @@ import { UserRepository } from 'src/services/user/userService';
       UserRoleRepository,
       OrganizationInviteRepository,
       InvitationRepository,
+      InvoiceRepository,
     ]),
+    HttpModule,
+    ConfigModule,
   ],
 
-  exports: [TypeOrmModule.forFeature()],
+  exports: [
+    TypeOrmModule.forFeature(),
+    HttpModule,
+    EmailService,
+    JwtStrategy,
+    JwtAuthGuard,
+  ],
+  providers: [EmailService, JwtStrategy, JwtAuthGuard],
 })
 export class SharedModule {}

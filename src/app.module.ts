@@ -17,6 +17,8 @@ import { SeederModule } from './seeder/seeder/seeder.module';
 import { AutomapperModule } from 'nestjsx-automapper';
 import { IdentityModule } from './modules/identity/identity.module';
 import { AuthService } from './services/auth/auth.service';
+import { EmailService } from './services/notification/email/email.service';
+import { InvoiceModule } from './modules/invoice/invoice.module';
 
 @Module({
   imports: [
@@ -40,6 +42,7 @@ import { AuthService } from './services/auth/auth.service';
     OrganizationModule,
     SeederModule,
     IdentityModule,
+    InvoiceModule,
   ],
   controllers: [AppController],
   providers: [
@@ -48,6 +51,7 @@ import { AuthService } from './services/auth/auth.service';
     AuthMiddleware,
     AppConfigService,
     AuthService,
+    EmailService,
   ],
 })
 export class AppModule implements NestModule {

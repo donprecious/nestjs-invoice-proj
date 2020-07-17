@@ -7,4 +7,11 @@ export const ConfigConstant = {
     name: 'DATABASE_NAME',
   },
   jwtSecret: 'JWT_SECRET',
+  emailService: {
+    baseUrl: 'EMAIL_SERVICE_BASEURL',
+    apiKey: 'EMAIL_SERVICE_APIKEY',
+  },
+  appId: 'APP_ID',
+  frontendUrl: 'FRONTEND_URL'
 };
+
