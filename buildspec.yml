@@ -1,0 +1,50 @@
+version: 0.2
+
+env:
+  variables:
+      AWS_ACCOUNT_ID : "073680014884"
+      IMAGE_REPO_NAME : "invoice-finance"
+      APP_NAME : "invoice-finance"
+      IMAGE_TAG : "latest"
+  #parameter-store:
+     # key: "value"
+     # key: "value"
+
+phases:
+  install:
+    commands:
+      # - command
+      - aws --version
+      - docker --version
+      - docker-compose --version
+  pre_build:
+    commands:
+        - echo Logging in to Amazon ECR...
+        - eval $(aws ecr get-login --no-include-email --region $AWS_DEFAULT_REGION)
+      # - command
+      # - command
+  build:
+    commands:
+        - echo Build started on `date`
+        - printenv
+        #- docker-compose -f docker-compose.yml build
+        - docker build -t $APP_NAME .
+        - docker images -a
+        - echo Building the Docker image...
+        - docker tag $APP_NAME:latest $AWS_ACCOUNT_ID.dkr.ecr.eu-west-1.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+        - docker images -a
+      # - command
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker image...
+      - aws ecr get-login --no-include-email --region $AWS_DEFAULT_REGION
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.eu-west-1.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+      - echo Writing image definitions file...
+      - printf '[{"name":"invoice-finance","imageUri":"%s"}]' $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG > imagedefinitions.json
+      # - command
+artifacts:
+  files:
+    - imagedefinitions.json
+  #discard-paths: yes
+  #base-directory: location
