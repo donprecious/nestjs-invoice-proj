@@ -1,3 +1,5 @@
+import { AppService } from './../../../../services/app/app.service';
+
 import { invitationStatus } from './../../../../shared/entity/entityStatus';
 import { Invitation } from './../../../../entities/Invitations.entity';
 import { OrganizationInvite } from './../../../../entities/organizationInvite.entity';
@@ -23,11 +25,16 @@ import {
   Body,
   HttpException,
   HttpStatus,
+  Request,
+  BadRequestException,
+  Get,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger/dist/decorators/api-use-tags.decorator';
 import { Organization } from 'src/entities/organization.entity';
 import { User } from 'src/entities/User.entity';
 import { UserRepository } from 'src/services/user/userService';
+import { ApiHeader } from '@nestjs/swagger/dist';
+import { CreateOrganizationDto } from 'src/dto/organization/create-organization.dto';
 
 @ApiTags('organization')
 @Controller('organization')
@@ -40,11 +47,54 @@ export class OrganizationController {
     private userRole: UserRoleRepository,
     private orgInvite: OrganizationInviteRepository,
     private invitationRepo: InvitationRepository,
+    private appService: AppService,
   ) {}
 
-  @Post()
-  async create(@Body() createUserOrg: CreateOrganizationUserDto) {
+  @ApiHeader({
+    name: 'organizationId',
+    description: 'provide organization id',
+  })
+  // @Post()
+  // async create(@Body() createOrg: CreateOrganizationDto) {
+  //   const organization = await this.appService.getOrganization();
+  //   const newOrg = createOrg as Organization;
+
+  //   this.orgService.create(newOrg);
+  //   const organizationInvite = {
+  //     inviteeOrganization: newOrg,
+  //     invitedByOrganization: organization,
+  //   } as OrganizationInvite;
+  // }
+  @Post('user')
+  async createWithUser(
+    @Body() createUserOrg: CreateOrganizationUserDto,
+    @Request() req,
+  ) {
+    let orgnizationId = req.headers['organization-id'];
+    if (orgnizationId) {
+      orgnizationId = orgnizationId.toString();
+
+      const organization = await this.orgService.findOne({
+        where: { id: orgnizationId },
+      });
+      if (!organization)
+        throw new BadRequestException(
+          AppResponse.badRequest('current organization   not found'),
+        );
+    }
     const org = createUserOrg.orgainzation as Organization;
+
+    // check if an org exist in the db
+    const existedOrg = await this.orgService.find({
+      where: { code: org.code },
+    });
+    if (existedOrg.length > 0) {
+      throw new BadRequestException(
+        AppResponse.badRequest(
+          'an organization with same organization code already exist',
+        ),
+      );
+    }
     const user = createUserOrg.user as User;
     const userFound = await this.userRepo.findOne({
       where: { email: user.email },
@@ -57,7 +107,6 @@ export class OrganizationController {
             'user with this email ' +
             userFound.email +
             '  already exist, use another one',
-          
         },
         HttpStatus.BAD_REQUEST,
       );
@@ -68,7 +117,8 @@ export class OrganizationController {
       user: user,
       organization: org,
     } as UserOrganization;
-   await this.userOrgRepo.insert(userOrg);
+
+    await this.userOrgRepo.insert(userOrg);
 
     let rolename = userOrg.organization.type;
     if (rolename.toLowerCase() == roleTypes.supplier.toLowerCase()) {
@@ -82,10 +132,12 @@ export class OrganizationController {
       await this.userRole.save({ user: user, role: role } as UserRole);
     }
 
-    if (createUserOrg.createdByOrgId) {
+    if (orgnizationId) {
       // find created byUserId
+      orgnizationId = orgnizationId.toString();
+
       const createByOrgan = await this.orgService.findOne({
-        where: { id: createUserOrg.createdByOrgId },
+        where: { id: orgnizationId },
       });
       if (createByOrgan) {
         const orgInvite = {
@@ -108,4 +160,26 @@ export class OrganizationController {
     return AppResponse.OkSuccess(createUserOrg);
   }
 
+  @Get('my/supplier')
+  async mySupplier() {
+    const myOrg = await this.appService.getOrganization();
+    const orgInvite = await this.orgInvite.find({
+      where: { invitedByOrganization: myOrg },
+      relations: ['inviteeOrganization', 'invitedByOrganization'],
+    });
+
+    const suppliers = orgInvite.map(a => a.inviteeOrganization);
+    return AppResponse.OkSuccess(suppliers);
+  }
+
+  @Get('my/buyer')
+  async myBuyer() {
+    const myOrg = await this.appService.getOrganization();
+    const orgInvite = await this.orgInvite.find({
+      where: { inviteeOrganization: myOrg },
+      relations: ['inviteeOrganization', 'invitedByOrganization'],
+    });
+    const suppliers = orgInvite.map(a => a.invitedByOrganization);
+    return AppResponse.OkSuccess(suppliers);
+  }
 }

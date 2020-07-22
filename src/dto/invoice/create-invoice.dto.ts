@@ -1,5 +1,6 @@
 import {
   IsDateString,
+  isNotEmpty,
   IsNotEmpty,
   IsNumber,
   ValidateNested,
@@ -21,14 +22,34 @@ export class CreateInvoiceDto {
   dueDate: Date;
 }
 
+export class CreateSingleInvoiceDto {
+  @IsNotEmpty()
+  invoiceNumber: string;
+
+  @IsNotEmpty()
+  currencyCode: string;
+
+  @IsNumber()
+  amount: number;
+
+  @IsDateString()
+  dueDate: Date;
+
+  @IsNotEmpty()
+  supplierCode: string;
+}
+
 export class CreateManyInvoiceDto {
+  @ValidateNested()
+  @Type(() => CreateSingleInvoiceDto)
+  invoices: CreateSingleInvoiceDto[];
+}
+
+export class CreateManyInvoiceBySupplierDto {
   @ValidateNested()
   @Type(() => CreateInvoiceDto)
   invoices: CreateInvoiceDto[];
 
   @IsNotEmpty()
   supplierId: string;
-
-  @IsNotEmpty()
-  createdByOrgId: string;
 }

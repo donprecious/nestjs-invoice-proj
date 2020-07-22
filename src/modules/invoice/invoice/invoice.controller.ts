@@ -1,19 +1,41 @@
-import { supplier } from './../../../shared/oranization/organizationType';
+import {
+  PaginationQueryParam,
+  PaginatedResultDto,
+} from './../../../shared/dto/pagination.dto';
+import { In } from 'typeorm/find-options/operator/In';
+import { Organization } from 'src/entities/organization.entity';
+import { invoiceExcelSchema } from './../invoiceExcelSchema';
+
 import { AppResponse } from 'src/shared/helpers/appresponse';
 import { OrganizationRepository } from 'src/services/organization/organizationService';
 import { InvoiceRepository } from './../../../services/invoice/invoice';
 import { Invoice } from './../../../entities/invoice.entity';
+import readXlsxFile = require('read-excel-file/node');
+import * as _ from 'lodash';
+import {
+  paginate,
+  Pagination,
+  IPaginationOptions,
+} from 'nestjs-typeorm-paginate';
+
 import {
   CreateInvoiceDto,
+  CreateManyInvoiceBySupplierDto,
   CreateManyInvoiceDto,
 } from './../../../dto/invoice/create-invoice.dto';
-import { ApiConsumes, ApiTags } from '@nestjs/swagger/dist/decorators';
 import {
-  BadGatewayException,
+  ApiConsumes,
+  ApiHeader,
+  ApiTags,
+} from '@nestjs/swagger/dist/decorators';
+import {
+  BadRequestException,
   Body,
   Controller,
   Get,
+  Param,
   Post,
+  Query,
   Request,
   UploadedFiles,
   UseGuards,
@@ -21,6 +43,8 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/modules/identity/auth/jwtauth.guard';
 import { AnyFilesInterceptor } from '@nestjs/platform-express/multer/interceptors/any-files.interceptor';
+import { Any } from 'typeorm';
+import { AppService } from 'src/services/app/app.service';
 
 @UseGuards(JwtAuthGuard)
 @ApiTags('invoice')
@@ -29,24 +53,43 @@ export class InvoiceController {
   constructor(
     private invoiceRepo: InvoiceRepository,
     private orgRepo: OrganizationRepository,
+    private appService: AppService,
   ) {}
 
+  @ApiHeader({
+    name: 'organizationId',
+    description: 'provide organization id',
+  })
   @Post()
-  async create(@Body() createInvoices: CreateManyInvoiceDto) {
+  async create(
+    @Body() createInvoices: CreateManyInvoiceBySupplierDto,
+    @Request() req,
+  ) {
+    let orgnizationId = req.headers['organization-id'];
+    if (!orgnizationId) {
+      throw new BadRequestException(
+        AppResponse.badRequest('organization-id not present in header'),
+      );
+    }
+    orgnizationId = orgnizationId.toString();
+
     const invoices = [] as Invoice[];
+
     const createdByOrg = await this.orgRepo.findOne({
-      where: { id: createInvoices.createdByOrgId },
+      where: { id: orgnizationId },
     });
     if (!createdByOrg)
-      throw new BadGatewayException(
-        AppResponse.badRequest('the organization (created by) cannot be found'),
+      throw new BadRequestException(
+        AppResponse.badRequest(
+          ' organization (with organization-id) cannot be found',
+        ),
       );
 
     const supplierOrg = await this.orgRepo.findOne({
       where: { id: createInvoices.supplierId },
     });
-    if (!createdByOrg)
-      throw new BadGatewayException(
+    if (!supplierOrg)
+      throw new BadRequestException(
         AppResponse.badRequest('the supplier organization  is cannot be found'),
       );
 
@@ -61,11 +104,195 @@ export class InvoiceController {
     return AppResponse.OkSuccess(createInvoices);
   }
 
-  @Post('upload')
+  @ApiHeader({
+    name: 'organizationId',
+    description: 'provide organization id',
+  })
+  @Post('upload/:supplierId')
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(AnyFilesInterceptor())
-  uploadFile(@UploadedFiles() files, @Request() req) {
-    console.log(files as File);
-    return req.user;
+  async uploadFile(
+    @UploadedFiles() files,
+    @Request() req,
+    // @Param('supplierId') supplierId: string,
+  ) {
+    if (!files || files.length <= 0) {
+      throw new BadRequestException(AppResponse.badRequest('no files found'));
+    }
+    let orgnizationId = req.headers['organization-id'];
+    if (!orgnizationId) {
+      throw new BadRequestException(
+        AppResponse.badRequest('organization-id not present in header'),
+      );
+    }
+    orgnizationId = orgnizationId.toString();
+
+    const organization = await this.orgRepo.findOne({
+      where: { id: orgnizationId },
+    });
+    if (!organization)
+      throw new BadRequestException(
+        AppResponse.badRequest('organization not found'),
+      );
+
+    // const supplierOrg = await this.orgRepo.findOne({
+    //   where: { id: supplierId },
+    // });
+
+    // if (!supplierOrg)
+    //   throw new BadRequestException(
+    //     AppResponse.badRequest('the supplier organization  is cannot be found'),
+    //   );
+
+    console.log(files);
+    const file = files[0];
+
+    const buffer = file.path;
+
+    const result = await readXlsxFile(buffer, { schema: invoiceExcelSchema });
+
+    const errors = result.errors;
+    if (errors && errors.length > 0) {
+      throw new BadRequestException(AppResponse.badRequest(errors));
+    }
+
+    // validate invoices
+    const invoiceNos = result.rows.map(a => a.invoiceNo);
+    const uniqueInvoiceNo = _.uniq(
+      result.rows.map(a => a.invoiceNo.toString()),
+    );
+    const duplicateInvoice = _.filter(invoiceNos, (val, i, iteratee) =>
+      _.includes(iteratee, val, Number(i) + 1),
+    );
+
+    if (duplicateInvoice.length > 0) {
+      throw new BadRequestException(
+        AppResponse.badRequest(
+          'duplicate invoiceNo found [] ' + duplicateInvoice,
+        ),
+      );
+    }
+
+    // validate unique inovice
+    //
+    const uniqueOrgInvoice = await this.invoiceRepo.find({
+      where: {
+        invoiceNumber: In(uniqueInvoiceNo),
+        createdByOrganization: organization,
+      },
+    });
+    const existedInvoiceNo = uniqueOrgInvoice.map(a => a.invoiceNumber);
+
+    const duplicateExistingCode = _.intersection(
+      uniqueInvoiceNo,
+      existedInvoiceNo,
+    );
+    if (duplicateExistingCode.length > 0) {
+      // the fellowing existing code already exist
+      throw new BadRequestException(
+        AppResponse.badRequest(
+          'the fellowing invoice number already exist, in your invoice [] ' +
+            duplicateExistingCode,
+        ),
+      );
+    }
+    ///
+    //validate unique supplier codes
+    const uniqueCodes = _.uniq(result.rows.map(a => a.supplierCode));
+
+    const uniqueOrganizations = await this.orgRepo.find({
+      where: { code: In(uniqueCodes) },
+    });
+    const uniqueOrgCodes = uniqueOrganizations.map(a => a.code);
+    const notfoundCodes = _.difference(uniqueCodes, uniqueOrgCodes);
+
+    if (notfoundCodes.length > 0) {
+      throw new BadRequestException(
+        AppResponse.badRequest(
+          'the fellowing organization code where not found [] ' + notfoundCodes,
+        ),
+      );
+    }
+    const invoices: Invoice[] = [];
+
+    for (const row of result.rows) {
+      const invoice = {
+        amount: row.amount,
+        invoiceNumber: row.invoiceNo,
+        currencyCode: row.currencyCode,
+        dueDate: row.dueDate,
+        createdByOrganization: organization,
+        createdForOrganization: uniqueOrganizations.find(
+          a => a.code == row.supplierCode,
+        ),
+      } as Invoice;
+      invoices.push(invoice);
+    }
+    this.invoiceRepo.save(invoices);
+
+    return AppResponse.OkSuccess(invoices);
+  }
+
+  @ApiHeader({
+    name: 'organizationId',
+    description: 'provide organization id',
+  })
+  @Get('supplier')
+  async GetInvoiceForSupplier(@Query() param: PaginationQueryParam) {
+    const organization = await this.appService.getOrganization();
+    console.log('param', param);
+    // const invoices = await paginate(
+    //   this.invoiceRepo,
+    //   { page: param.page, limit: param.limit, route: '/invoice/supplier' },
+    //   { createdByOrganization: organization },
+    // );
+    const skippedItems = (param.page - 1) * param.limit;
+    const result = await this.invoiceRepo.findAndCount({
+      where: { createdByOrganization: organization },
+      relations: ['createdByOrganization', 'createdForOrganization'],
+      skip: skippedItems,
+      take: param.limit,
+    });
+    const pageRes: PaginatedResultDto = {
+      data: result[0],
+      limit: param.limit,
+      page: param.page,
+      totalCount: result[1],
+    };
+
+    return AppResponse.OkSuccess(pageRes);
+  }
+  @Get('buyer')
+  async GetInvoiceForBuyer(@Query() param: PaginationQueryParam) {
+    const organization = await this.appService.getOrganization();
+    console.log('param', param);
+    const invoices = await paginate(
+      this.invoiceRepo,
+      { page: param.page, limit: param.limit, route: '/invoice/supplier' },
+      { createdForOrganization: organization },
+    );
+    return AppResponse.OkSuccess(invoices);
+  }
+
+  @Get()
+  async GetAllInvoice(@Query() param: PaginationQueryParam) {
+    console.log('param', param);
+    const invoices = await paginate(this.invoiceRepo, {
+      page: param.page,
+      limit: param.limit,
+      route: '/invoice/supplier',
+    });
+    return AppResponse.OkSuccess(invoices);
+  }
+
+  @Get(':invoiceId')
+  async GetInvoice(@Param('invoiceId') invoiceId: string) {
+    const invoice = await this.invoiceRepo.findOne({
+      where: { id: invoiceId },
+    });
+    if (!invoice) {
+      throw new BadRequestException(AppResponse.badRequest('No Invoice Found'));
+    }
+    return AppResponse.OkSuccess(invoice);
   }
 }
