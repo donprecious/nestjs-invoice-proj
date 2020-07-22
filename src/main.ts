@@ -1,4 +1,3 @@
-
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule } from '@nestjs/swagger/dist/swagger-module';
@@ -8,10 +7,9 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const options = new DocumentBuilder()
-    .setTitle('Notification Service Api')
-    .setDescription('notification api for sending emails and sms ')
+    .setTitle('Front edge Service Api')
+    .setDescription('Front edge api ')
     .setVersion('1.0')
-
     .build();
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('api', app, document);

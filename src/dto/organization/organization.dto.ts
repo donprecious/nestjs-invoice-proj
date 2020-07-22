@@ -20,3 +20,20 @@ export class OrganizationDto extends EntityDto {
 
   @AutoMap() type: string;
 }
+
+export class OrganizationPayloadDto {
+  id: string;
+  @AutoMap() name: string;
+
+  @AutoMap() code: string;
+
+  @AutoMap() email: string;
+
+  @AutoMap() address: string;
+
+  @AutoMap() phone: string;
+
+  @AutoMap() taxId: string;
+
+  @AutoMap() type: string;
+}
