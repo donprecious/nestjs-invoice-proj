@@ -1,7 +1,5 @@
 import { ConfigConstant } from './shared/constants/ConfigConstant';
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 
 import { ApikeyValidatorService } from './shared/validators/apikey-validator/apikey-validator.service';
 import { AuthMiddleware } from './shared/middlewares/auth-middleware/auth-middleware.service';
@@ -19,6 +17,7 @@ import { IdentityModule } from './modules/identity/identity.module';
 import { AuthService } from './services/auth/auth.service';
 import { EmailService } from './services/notification/email/email.service';
 import { InvoiceModule } from './modules/invoice/invoice.module';
+import { AppService } from './services/app/app.service';
 
 @Module({
   imports: [
@@ -44,9 +43,8 @@ import { InvoiceModule } from './modules/invoice/invoice.module';
     IdentityModule,
     InvoiceModule,
   ],
-  controllers: [AppController],
+  controllers: [],
   providers: [
-    AppService,
     ApikeyValidatorService,
     AuthMiddleware,
     AppConfigService,

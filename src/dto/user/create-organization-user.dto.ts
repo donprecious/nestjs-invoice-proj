@@ -12,7 +12,7 @@ export class CreateOrganizationUserDto {
   @Type(() => CreateUserDto)
   user: CreateUserDto;
 
-  createdByOrgId: string;
+ 
 }
 
 export class ConfirmOrganizationWithUserDto {

@@ -4,6 +4,13 @@ export const responseStatus = {
   success: 'success',
   fail: 'failed',
 };
+export enum AppErrorCode {
+  ERROR = 'ERROR',
+  Duplicate = 'DUPLICATE_VALUES',
+  Existing = 'EXISTING_VALUES',
+  NOT_EXISTING = 'NOT_EXISTING',
+}
+
 export class AppResponse {
   static OkSuccess(obj: object, message = '') {
     const res = {
@@ -29,10 +36,16 @@ export class AppResponse {
     return res;
   }
 
-  static badRequest(errors) {
+  static badRequest(
+    errors,
+    message = '',
+    code: AppErrorCode = AppErrorCode.ERROR,
+  ) {
     return {
       status: HttpStatus.BAD_REQUEST,
       error: errors,
+      message: message,
+      code: code,
     };
   }
 }

@@ -17,6 +17,8 @@ import { OrganizationRepository } from 'src/services/organization/organizationSe
 import { UserRepository } from 'src/services/user/userService';
 import { JwtStrategy } from '../identity/jwt.strategy';
 import { JwtAuthGuard } from '../identity/auth/jwtauth.guard';
+import { MulterModule } from '@nestjs/platform-express/multer/multer.module';
+import { AppService } from 'src/services/app/app.service';
 
 @Module({
   imports: [
@@ -32,6 +34,9 @@ import { JwtAuthGuard } from '../identity/auth/jwtauth.guard';
     ]),
     HttpModule,
     ConfigModule,
+    MulterModule.register({
+      dest: '/upload',
+    }),
   ],
 
   exports: [
@@ -40,7 +45,9 @@ import { JwtAuthGuard } from '../identity/auth/jwtauth.guard';
     EmailService,
     JwtStrategy,
     JwtAuthGuard,
+    AppService,
+    MulterModule.register(),
   ],
-  providers: [EmailService, JwtStrategy, JwtAuthGuard],
+  providers: [EmailService, JwtStrategy, JwtAuthGuard, AppService],
 })
 export class SharedModule {}
