@@ -5,8 +5,8 @@ COPY ./run.sh ./
 RUN npm install
 COPY . .
 RUN npm run build
-RUN ls -lthra 
 RUN chmod 755 run.sh
 # EXPOSE 3000
 #CMD ["npm", "run", "start:prod"]
-ENTRYPOINT ["/bin/bash", "/run.sh"]
+RUN ls -lthra 
+ENTRYPOINT ["/bin/bash", "run.sh"]
