@@ -5,14 +5,15 @@ import { DocumentBuilder } from '@nestjs/swagger/dist/document-builder';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule); 
+  app.setGlobalPrefix('api/scf');
   const options = new DocumentBuilder()
     .setTitle('Front edge Service Api')
     .setDescription('Front edge api ')
     .setVersion('1.0')
     .build();
   const document = SwaggerModule.createDocument(app, options);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('doc', app, document);
 
   app.useGlobalPipes(
     new ValidationPipe({
