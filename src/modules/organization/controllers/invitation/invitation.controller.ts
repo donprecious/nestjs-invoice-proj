@@ -1,4 +1,4 @@
-onimport { invitationStatus } from './../../../../shared/entity/entityStatus';
+import { invitationStatus } from './../../../../shared/entity/entityStatus';
 import { UserRepository } from './../../../../services/user/userService';
 import { OrganizationRepository } from 'src/services/organization/organizationService';
 import { Organization } from 'src/entities/organization.entity';
