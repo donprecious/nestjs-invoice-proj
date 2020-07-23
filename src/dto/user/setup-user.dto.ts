@@ -5,7 +5,7 @@ export class SetupUserDto {
   @IsNotEmpty()
   userId: string;
   @IsNotEmpty()
-  otp: string;
+  otp: number;
   @IsNotEmpty()
   password: string;
 }

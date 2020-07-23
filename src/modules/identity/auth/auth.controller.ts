@@ -1,3 +1,4 @@
+import { AppService } from 'src/services/app/app.service';
 import { GetRoleDto } from './../../../dto/role/role.dto';
 import {
   OrganizationDto,
@@ -21,6 +22,8 @@ import {
   Get,
   Param,
   Post,
+  UseGuards,
+  Request,
   ValidationPipe,
 } from '@nestjs/common';
 import { SetupUserDto } from 'src/dto/user/setup-user.dto';
@@ -32,6 +35,7 @@ import { randomBytes } from 'crypto';
 import moment = require('moment');
 import { Timestamp } from 'typeorm';
 import { async } from 'rxjs/internal/scheduler/async';
+import { JwtAuthGuard } from './jwtauth.guard';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -42,6 +46,7 @@ export class AuthController {
     private userOrg: UserOrganizationRepository,
     private emailSerice: EmailService,
     private configService: ConfigService,
+    private appService: AppService,
   ) {}
 
   @Post('/activate')
@@ -53,9 +58,26 @@ export class AuthController {
     if (!findUser) {
       throw new BadRequestException(AppResponse.badRequest('user not found'));
     }
+
+    if (findUser.otp !== detail.otp) {
+      throw new BadRequestException(
+        AppResponse.badRequest('invalid or expired otp'),
+      );
+    }
+
+    const hasExpired = moment().isAfter(findUser.otpExpiresIn);
+    if (hasExpired) {
+      throw new BadRequestException(
+        AppResponse.badRequest('invalid or expired otp'),
+      );
+    }
+
     const hashedPassword = await hash(detail.password, 10);
     findUser.passwordHash = hashedPassword;
+    findUser.otp = null;
+    findUser.otpExpiresIn = null;
     this.userRepo.update(findUser.id, findUser);
+    
     return AppResponse.OkSuccess(detail, 'user activated');
   }
 
@@ -129,7 +151,7 @@ export class AuthController {
     }
     const token = randomBytes(20).toString('hex');
     findUser.resetPasswordToken = token;
-    const time = moment().add(5, 'minutes');
+    const time = moment().add(20, 'minutes');
     findUser.resetPasswordTokenExpire = time.toDate();
     this.userRepo.update(findUser.id, findUser);
 
@@ -183,5 +205,13 @@ export class AuthController {
       null,
       'password reset successful, login to continue',
     );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('currentUser')
+  async currentUser(@Request() req) {
+    // const user = req.user as JwtPayloadDto;
+    const user = await this.appService.getLoggedUser();
+    return user;
   }
 }

@@ -45,6 +45,8 @@ import { JwtAuthGuard } from 'src/modules/identity/auth/jwtauth.guard';
 import { AnyFilesInterceptor } from '@nestjs/platform-express/multer/interceptors/any-files.interceptor';
 import { Any } from 'typeorm';
 import { AppService } from 'src/services/app/app.service';
+import { EmailService } from 'src/services/notification/email/email.service';
+import { ConfigService } from '@nestjs/config';
 
 @UseGuards(JwtAuthGuard)
 @ApiTags('invoice')
@@ -265,30 +267,46 @@ export class InvoiceController {
   @Get('buyer')
   async GetInvoiceForBuyer(@Query() param: PaginationQueryParam) {
     const organization = await this.appService.getOrganization();
-    console.log('param', param);
-    const invoices = await paginate(
-      this.invoiceRepo,
-      { page: param.page, limit: param.limit, route: '/invoice/supplier' },
-      { createdForOrganization: organization },
-    );
-    return AppResponse.OkSuccess(invoices);
+
+    const skippedItems = (param.page - 1) * param.limit;
+    const result = await this.invoiceRepo.findAndCount({
+      where: { createdForOrganization: organization },
+      relations: ['createdByOrganization', 'createdForOrganization'],
+      skip: skippedItems,
+      take: param.limit,
+    });
+    const pageRes: PaginatedResultDto = {
+      data: result[0],
+      limit: param.limit,
+      page: param.page,
+      totalCount: result[1],
+    };
+    return AppResponse.OkSuccess(pageRes);
   }
 
   @Get()
   async GetAllInvoice(@Query() param: PaginationQueryParam) {
     console.log('param', param);
-    const invoices = await paginate(this.invoiceRepo, {
-      page: param.page,
-      limit: param.limit,
-      route: '/invoice/supplier',
+    const skippedItems = (param.page - 1) * param.limit;
+    const result = await this.invoiceRepo.findAndCount({
+      relations: ['createdByOrganization', 'createdForOrganization'],
+      skip: skippedItems,
+      take: param.limit,
     });
-    return AppResponse.OkSuccess(invoices);
+    const pageRes: PaginatedResultDto = {
+      data: result[0],
+      limit: param.limit,
+      page: param.page,
+      totalCount: result[1],
+    };
+    return AppResponse.OkSuccess(pageRes);
   }
 
   @Get(':invoiceId')
   async GetInvoice(@Param('invoiceId') invoiceId: string) {
     const invoice = await this.invoiceRepo.findOne({
       where: { id: invoiceId },
+      relations: ['createdByOrganization', 'createdForOrganization'],
     });
     if (!invoice) {
       throw new BadRequestException(AppResponse.badRequest('No Invoice Found'));

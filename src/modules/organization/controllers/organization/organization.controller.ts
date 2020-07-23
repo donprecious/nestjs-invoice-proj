@@ -1,3 +1,5 @@
+import { GenerateRandom } from './../../../../shared/helpers/utility';
+import { CreateUserDto } from './../../../../dto/organization/create-user.dto';
 import { AppService } from './../../../../services/app/app.service';
 
 import { invitationStatus } from './../../../../shared/entity/entityStatus';
@@ -28,6 +30,7 @@ import {
   Request,
   BadRequestException,
   Get,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger/dist/decorators/api-use-tags.decorator';
 import { Organization } from 'src/entities/organization.entity';
@@ -35,7 +38,13 @@ import { User } from 'src/entities/User.entity';
 import { UserRepository } from 'src/services/user/userService';
 import { ApiHeader } from '@nestjs/swagger/dist';
 import { CreateOrganizationDto } from 'src/dto/organization/create-organization.dto';
-
+import { ConfigService } from '@nestjs/config';
+import { EmailService } from 'src/services/notification/email/email.service';
+import { ConfigConstant } from 'src/shared/constants/ConfigConstant';
+import { EmailDto } from 'src/shared/dto/emailDto';
+import { JwtAuthGuard } from 'src/modules/identity/auth/jwtauth.guard';
+import moment = require('moment');
+@UseGuards(JwtAuthGuard)
 @ApiTags('organization')
 @Controller('organization')
 export class OrganizationController {
@@ -48,23 +57,14 @@ export class OrganizationController {
     private orgInvite: OrganizationInviteRepository,
     private invitationRepo: InvitationRepository,
     private appService: AppService,
+    private emailSerice: EmailService,
+    private configService: ConfigService,
   ) {}
 
   @ApiHeader({
     name: 'organizationId',
     description: 'provide organization id',
   })
-  // @Post()
-  // async create(@Body() createOrg: CreateOrganizationDto) {
-  //   const organization = await this.appService.getOrganization();
-  //   const newOrg = createOrg as Organization;
-
-  //   this.orgService.create(newOrg);
-  //   const organizationInvite = {
-  //     inviteeOrganization: newOrg,
-  //     invitedByOrganization: organization,
-  //   } as OrganizationInvite;
-  // }
   @Post('user')
   async createWithUser(
     @Body() createUserOrg: CreateOrganizationUserDto,
@@ -79,9 +79,12 @@ export class OrganizationController {
       });
       if (!organization)
         throw new BadRequestException(
-          AppResponse.badRequest('current organization   not found'),
+          AppResponse.badRequest('current organization  not found'),
         );
     }
+
+    const currentUser = await this.appService.getCurrentUser();
+
     const org = createUserOrg.orgainzation as Organization;
 
     // check if an org exist in the db
@@ -111,6 +114,7 @@ export class OrganizationController {
         HttpStatus.BAD_REQUEST,
       );
     }
+
     await this.orgService.insert(org);
     await this.userRepo.insert(user);
     const userOrg = {
@@ -123,7 +127,7 @@ export class OrganizationController {
     let rolename = userOrg.organization.type;
     if (rolename.toLowerCase() == roleTypes.supplier.toLowerCase()) {
       rolename = roleTypes.supplierAdmin;
-    } else if (rolename.toLowerCase() == roleTypes.buyerAdmin.toLowerCase()) {
+    } else if (rolename.toLowerCase() == roleTypes.buyer.toLowerCase()) {
       rolename = roleTypes.buyerAdmin;
     }
     const role = await this.roleRepo.findOne({ where: { Name: rolename } });
@@ -149,17 +153,90 @@ export class OrganizationController {
     }
     // todo create invitation and sent email to this user
     const invitation = {
-      invitedByUser: user, // update to current loggedin user
+      invitedByUser: currentUser, // update to current loggedin user
       confirmationType: roleTypes.supplierAdmin,
       organization: org,
       status: invitationStatus.pending,
       user: user,
     } as Invitation;
     await this.invitationRepo.save(invitation);
-    // todo send email to this user with invitation link
+    // todo send email to this user with invitation link]
+    const inviteUrl =
+      this.configService.get(ConfigConstant.frontendUrl) +
+      `join/?inviteId=${invitation.id}`;
+    const message = `Hello You have been invited to Verify and Activate your account 
+      <br> click the click below <a href='${inviteUrl}'>Activate account</a>
+    `;
+    const emailMessage: EmailDto = {
+      to: [org.email, user.email],
+      body: message,
+      subject: 'Invitation ',
+    };
+    this.emailSerice.sendEmail(emailMessage).subscribe(d => console.log(d));
     return AppResponse.OkSuccess(createUserOrg);
   }
 
+  @ApiHeader({
+    name: 'organizationId',
+    description: 'provide organization id',
+  })
+  @Post('add-user')
+  async addUser(@Body() createUser: CreateUserDto) {
+    const org = await this.appService.getOrganization();
+    const currentUser = await this.appService.getCurrentUser();
+    const user = createUser as User;
+    const userFound = await this.userRepo.findOne({
+      where: { email: user.email },
+    });
+    if (userFound) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error:
+            'user with this email ' +
+            userFound.email +
+            '  already exist, use another one',
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    await this.userRepo.insert(user);
+    const rolename = org.type;
+
+    const role = await this.roleRepo.findOne({ where: { Name: rolename } });
+    if (role) {
+      await this.userRole.save({ user: user, role: role } as UserRole);
+    }
+
+    const invitation = {
+      invitedByUser: currentUser, // update to current loggedin user
+      confirmationType: roleTypes.supplierAdmin,
+      organization: org,
+      status: invitationStatus.pending,
+      user: user,
+    } as Invitation;
+    await this.invitationRepo.save(invitation);
+    // todo send email to this user with invitation link]
+    const inviteUrl =
+      this.configService.get(ConfigConstant.frontendUrl) +
+      `join/?inviteId=${invitation.id}`;
+    const message = `Hello You have been invited to Verify and Activate your account
+      <br> click the click below <a href='${inviteUrl}'>Activate account</a>
+    `;
+    const emailMessage: EmailDto = {
+      to: [org.email, user.email],
+      body: message,
+      subject: 'reset password',
+    };
+    this.emailSerice.sendEmail(emailMessage).subscribe(d => console.log(d));
+    return AppResponse.OkSuccess({});
+  }
+
+  @ApiHeader({
+    name: 'organizationId',
+    description: 'provide organization id',
+  })
   @Get('my/supplier')
   async mySupplier() {
     const myOrg = await this.appService.getOrganization();
@@ -172,6 +249,10 @@ export class OrganizationController {
     return AppResponse.OkSuccess(suppliers);
   }
 
+  @ApiHeader({
+    name: 'organizationId',
+    description: 'provide organization id',
+  })
   @Get('my/buyer')
   async myBuyer() {
     const myOrg = await this.appService.getOrganization();
