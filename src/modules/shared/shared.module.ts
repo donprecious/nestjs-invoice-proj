@@ -47,6 +47,7 @@ import { AppService } from 'src/services/app/app.service';
     JwtAuthGuard,
     AppService,
     MulterModule.register(),
+    ConfigModule,
   ],
   providers: [EmailService, JwtStrategy, JwtAuthGuard, AppService],
 })

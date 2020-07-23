@@ -18,6 +18,8 @@ import { AuthService } from './services/auth/auth.service';
 import { EmailService } from './services/notification/email/email.service';
 import { InvoiceModule } from './modules/invoice/invoice.module';
 import { AppService } from './services/app/app.service';
+import { TerminusModule } from '@nestjs/terminus/dist/terminus.module';
+import { HealthController } from './health/health.controller';
 
 @Module({
   imports: [
@@ -42,8 +44,9 @@ import { AppService } from './services/app/app.service';
     SeederModule,
     IdentityModule,
     InvoiceModule,
+    TerminusModule
   ],
-  controllers: [],
+  controllers: [HealthController],
   providers: [
     ApikeyValidatorService,
     AuthMiddleware,

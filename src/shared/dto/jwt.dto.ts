@@ -10,4 +10,4 @@ export class JwtPayloadDto{
   lastname: string; 
   organization: OrganizationPayloadDto;
   role: GetRoleDto[];
-}
+} 

@@ -5,5 +5,6 @@ export const entityStatus = {
 
 export const invitationStatus = {
   pending: 'pending',
+  canceled: 'canceled',
   accepted: 'accepted',
 };

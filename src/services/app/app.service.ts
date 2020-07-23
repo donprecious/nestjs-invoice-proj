@@ -1,3 +1,6 @@
+import { UserRepository } from './../user/userService';
+import { User } from './../../entities/User.entity';
+import { JwtPayloadDto } from './../../shared/dto/jwt.dto';
 import { Organization } from './../../entities/organization.entity';
 import { OrganizationRepository } from './../organization/organizationService';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
@@ -11,6 +14,7 @@ export class AppService {
   constructor(
     @Inject(REQUEST) private request: Request,
     private orgRepo: OrganizationRepository,
+    private userRepo: UserRepository,
   ) {}
 
   async getOrganization(): Promise<Organization> {
@@ -33,5 +37,26 @@ export class AppService {
       );
     }
     return organization;
+  }
+
+  getLoggedUser(): JwtPayloadDto {
+    const request = this.request as any;
+    const user = request.user as JwtPayloadDto;
+    return user;
+  }
+
+  async getCurrentUser(): Promise<User> {
+    const loggedUser = this.getLoggedUser();
+    if (!loggedUser) {
+      throw new BadRequestException(
+        AppResponse.badRequest('organization-id not present in header'),
+      );
+    }
+
+    const user = await this.userRepo.findOne({
+      where: { id: loggedUser.userId },
+    });
+
+    return user;
   }
 }
