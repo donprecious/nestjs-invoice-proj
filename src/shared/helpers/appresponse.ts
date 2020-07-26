@@ -28,7 +28,7 @@ export class AppResponse {
     };
     return res;
   }
-  static NotFound(message = '') {
+  static NotFound(message = 'resourse(s) not found') {
     const res = {
       message: message,
       status: responseStatus.fail,

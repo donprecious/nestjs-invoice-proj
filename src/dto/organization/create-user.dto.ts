@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsEmail } from 'class-validator';
+import { statusConstant } from './../../shared/constants/StatusConstant';
+import { IsNotEmpty, IsEmail, IsIn } from 'class-validator';
 import { AutoMap } from 'nestjsx-automapper';
 
 export class CreateUserDto {
@@ -17,4 +18,25 @@ export class CreateUserDto {
   @IsNotEmpty()
   @AutoMap()
   phone: string;
+
+  role: string;
+}
+
+export class EditUserDto {
+  @IsNotEmpty()
+  @AutoMap()
+  firstName: string;
+
+  @IsNotEmpty()
+  @AutoMap()
+  lastName: string;
+
+  @IsNotEmpty()
+  @AutoMap()
+  phone: string;
+
+  role: string;
+
+  @IsIn([statusConstant.active, statusConstant.inactive])
+  status: string;
 }

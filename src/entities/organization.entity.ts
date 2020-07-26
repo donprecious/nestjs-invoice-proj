@@ -1,7 +1,9 @@
+import { Address } from './../dto/organization/organization.dto';
 import { BaseEntity } from './../shared/entity/baseEntity';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { UserOrganization } from './userOrganization.entity';
 import { AutoMap } from 'nestjsx-automapper';
+import { Type } from 'class-transformer';
 
 @Entity()
 export class Organization extends BaseEntity {
@@ -17,9 +19,8 @@ export class Organization extends BaseEntity {
   @AutoMap()
   email: string;
 
-  @Column()
-  @AutoMap()
-  address: string;
+  @Column('simple-json')
+  address: Address;
 
   @Column()
   @AutoMap()
@@ -27,7 +28,7 @@ export class Organization extends BaseEntity {
 
   @Column()
   @AutoMap()
-  bankname: string;
+  bankcode: string;
 
   @Column()
   @AutoMap()
@@ -40,6 +41,9 @@ export class Organization extends BaseEntity {
   @Column()
   @AutoMap()
   type: string;
+
+  @Column({ default: 'active' })
+  status: string;
 
   @OneToMany(
     type => UserOrganization,

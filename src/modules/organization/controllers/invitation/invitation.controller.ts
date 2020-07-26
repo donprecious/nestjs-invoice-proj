@@ -74,21 +74,21 @@ export class InvitationController {
 
     const confimationType = invite.confirmationType;
 
-    const userInfo: UserDto = {
+    const userInfo = {
       id: invite.user.id,
       createdOn: invite.user.createdOn,
       email: invite.user.email,
       firstName: invite.user.firstName,
       lastName: invite.user.lastName,
       phone: invite.user.phone,
-    };
+    } as UserDto;
 
     if (confimationType == roleTypes.supplierAdmin) {
       const orgInfo = {
         id: invite.organization.id,
         address: invite.organization.address,
         bankNumber: invite.organization.bankNumber,
-        bankname: invite.organization.bankname,
+        bankcode: invite.organization.bankcode,
         code: invite.organization.code,
         email: invite.organization.email,
         createdOn: invite.organization.createdOn,
@@ -135,7 +135,7 @@ export class InvitationController {
     let updatedOrganisation = invite.organization;
     updatedOrganisation.address = confirmUserOrg.orgainzation.address;
     updatedOrganisation.bankNumber = confirmUserOrg.orgainzation.bankNumber;
-    updatedOrganisation.bankname = confirmUserOrg.orgainzation.bankname;
+    updatedOrganisation.bankcode = confirmUserOrg.orgainzation.bankcode;
     updatedOrganisation.code = confirmUserOrg.orgainzation.code;
     updatedOrganisation.email = confirmUserOrg.orgainzation.email;
     updatedOrganisation.name = confirmUserOrg.orgainzation.name;
@@ -159,7 +159,7 @@ export class InvitationController {
 
     invite.status = invitationStatus.accepted;
     await this.invitationRepo.update(invite.id, invite);
-    const userDto = userToUpdate as UserDto;
+    const userDto = (userToUpdate as unknown) as UserDto;
     userDto.id = updateUser.id;
 
     const orgDto = confirmUserOrg.orgainzation as OrganizationDto;
@@ -202,7 +202,7 @@ export class InvitationController {
     let updatedOrganisation = invite.organization;
     updatedOrganisation.address = confirmUserOrg.orgainzation.address;
     updatedOrganisation.bankNumber = confirmUserOrg.orgainzation.bankNumber;
-    updatedOrganisation.bankname = confirmUserOrg.orgainzation.bankname;
+    updatedOrganisation.bankcode = confirmUserOrg.orgainzation.bankcode;
     updatedOrganisation.code = confirmUserOrg.orgainzation.code;
     updatedOrganisation.email = confirmUserOrg.orgainzation.email;
     updatedOrganisation.name = confirmUserOrg.orgainzation.name;
@@ -220,7 +220,7 @@ export class InvitationController {
 
     invite.status = invitationStatus.canceled;
     await this.invitationRepo.update(invite.id, invite);
-    const userDto = userToUpdate as UserDto;
+    const userDto = (userToUpdate as unknown) as UserDto;
     userDto.id = updateUser.id;
 
     const orgDto = confirmUserOrg.orgainzation as OrganizationDto;
@@ -277,7 +277,7 @@ export class InvitationController {
 
       await this.invitationRepo.update(invite.id, invite);
 
-      const userDto = userToUpdate as UserDto;
+      const userDto = (userToUpdate as unknown) as UserDto;
       userDto.id = updateUser.id;
 
       const message = ` Activate your account with your Otp : <b>${otp}</b>
@@ -331,7 +331,7 @@ export class InvitationController {
       invite.status = invitationStatus.canceled;
       await this.invitationRepo.update(invite.id, invite);
 
-      const userDto = userToUpdate as UserDto;
+      const userDto = (userToUpdate as unknown) as UserDto;
       userDto.id = updateUser.id;
       return AppResponse.OkSuccess(
         userDto,
