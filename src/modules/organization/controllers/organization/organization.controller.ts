@@ -1,5 +1,10 @@
+import { UserDto } from './../../../../dto/user/user.dto';
+import { EditOrganizationDto } from './../../../../dto/organization/create-organization.dto';
 import { GenerateRandom } from './../../../../shared/helpers/utility';
-import { CreateUserDto } from './../../../../dto/organization/create-user.dto';
+import {
+  CreateUserDto,
+  EditUserDto,
+} from './../../../../dto/organization/create-user.dto';
 import { AppService } from './../../../../services/app/app.service';
 
 import { invitationStatus } from './../../../../shared/entity/entityStatus';
@@ -31,6 +36,8 @@ import {
   BadRequestException,
   Get,
   UseGuards,
+  Param,
+  Put,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger/dist/decorators/api-use-tags.decorator';
 import { Organization } from 'src/entities/organization.entity';
@@ -44,6 +51,10 @@ import { ConfigConstant } from 'src/shared/constants/ConfigConstant';
 import { EmailDto } from 'src/shared/dto/emailDto';
 import { JwtAuthGuard } from 'src/modules/identity/auth/jwtauth.guard';
 import moment = require('moment');
+import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception';
+import { String } from 'lodash';
+import { PromiseUtils } from 'typeorm';
+import { GetRoleDto } from 'src/dto/role/role.dto';
 @UseGuards(JwtAuthGuard)
 @ApiTags('organization')
 @Controller('organization')
@@ -60,6 +71,89 @@ export class OrganizationController {
     private emailSerice: EmailService,
     private configService: ConfigService,
   ) {}
+
+  @ApiHeader({
+    name: 'organizationId',
+    description: 'provide organization id',
+  })
+  @Post()
+  async create(@Body() createOrg: CreateOrganizationDto, @Request() req) {
+    const organization = await this.appService.getOrganization();
+
+    const orgnizationId = organization.id;
+
+    const currentUser = await this.appService.getCurrentUser();
+
+    const org = createOrg as Organization;
+
+    // check if an org exist in the db
+    const existedOrg = await this.orgService.find({
+      where: { code: org.code },
+    });
+    if (existedOrg.length > 0) {
+      throw new BadRequestException(
+        AppResponse.badRequest(
+          'an organization with same organization code already exist',
+        ),
+      );
+    }
+
+    await this.orgService.insert(org);
+
+    const orgInvite = {
+      invitedByOrganization: organization,
+      inviteeOrganization: org,
+    } as OrganizationInvite;
+    this.orgInvite.save(orgInvite);
+
+    return AppResponse.OkSuccess(org);
+  }
+
+  @Put(':organizationId')
+  async edit(
+    @Body() editOrg: EditOrganizationDto,
+    @Param('organizationId') organizationId: string,
+  ) {
+    let organization = await this.orgService.findOne({
+      where: { id: organizationId },
+    });
+
+    // check if orgaization exist
+    if (!organization) {
+      throw new BadRequestException(
+        AppResponse.badRequest('organization not found'),
+      );
+    }
+    const existedOrg = await this.orgService.findOne({
+      where: { code: editOrg.code },
+    });
+    if (existedOrg && existedOrg.id != organization.id) {
+      throw new BadRequestException(
+        AppResponse.badRequest(
+          'an organization with same organization code already exist',
+        ),
+      );
+    }
+    const currentUser = await this.appService.getCurrentUser();
+
+    organization.address = editOrg.address;
+    organization.bankNumber = editOrg.bankNumber;
+    organization.bankcode = editOrg.bankcode;
+    organization.code = editOrg.code;
+    organization.email = editOrg.email;
+    organization.name = editOrg.name;
+    organization.phone = editOrg.phone;
+    organization.taxId = editOrg.taxId;
+    organization.status = editOrg.status;
+
+    organization.updatedBy = currentUser.id;
+
+    console.log(organization);
+
+    await this.orgService.update(organization.id, organization);
+
+    return AppResponse.OkSuccess(organization);
+  }
 
   @ApiHeader({
     name: 'organizationId',
@@ -98,7 +192,7 @@ export class OrganizationController {
         ),
       );
     }
-    const user = createUserOrg.user as User;
+    const user = (createUserOrg.user as unknown) as User;
     const userFound = await this.userRepo.findOne({
       where: { email: user.email },
     });
@@ -184,7 +278,7 @@ export class OrganizationController {
   async addUser(@Body() createUser: CreateUserDto) {
     const org = await this.appService.getOrganization();
     const currentUser = await this.appService.getCurrentUser();
-    const user = createUser as User;
+    const user = (createUser as unknown) as User;
     const userFound = await this.userRepo.findOne({
       where: { email: user.email },
     });
@@ -201,10 +295,17 @@ export class OrganizationController {
       );
     }
 
-    await this.userRepo.insert(user);
-    const rolename = org.type;
-
+    let rolename = org.type;
+    if (!createUser.role) {
+      rolename = createUser.role;
+    }
     const role = await this.roleRepo.findOne({ where: { Name: rolename } });
+
+    if (!role) {
+      throw new BadRequestException(AppResponse.badRequest('role not found'));
+    }
+    await this.userRepo.insert(user);
+
     if (role) {
       await this.userRole.save({ user: user, role: role } as UserRole);
     }
@@ -225,9 +326,9 @@ export class OrganizationController {
       <br> click the click below <a href='${inviteUrl}'>Activate account</a>
     `;
     const emailMessage: EmailDto = {
-      to: [org.email, user.email],
+      to: [user.email],
       body: message,
-      subject: 'reset password',
+      subject: 'Activate Your Account',
     };
     this.emailSerice.sendEmail(emailMessage).subscribe(d => console.log(d));
     return AppResponse.OkSuccess({});
@@ -237,7 +338,61 @@ export class OrganizationController {
     name: 'organizationId',
     description: 'provide organization id',
   })
-  @Get('my/supplier')
+  @Put('edit-user/:userId')
+  async EditUser(
+    @Body() editUser: EditUserDto,
+    @Param('userId') userId: string,
+  ) {
+    const currentUser = await this.appService.getCurrentUser();
+
+    const user = await this.userRepo.findOne({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new NotFoundException(AppResponse.NotFound('user not found'));
+    }
+    user.firstName = editUser.firstName;
+    user.lastName = editUser.lastName;
+    user.phone = editUser.phone;
+    user.status = editUser.status.toLowerCase();
+    user.updatedBy = currentUser.id;
+    const rolename = editUser.role;
+    if (rolename) {
+      const role = await this.roleRepo.findOne({ where: { Name: rolename } });
+
+      if (!role) {
+        throw new BadRequestException(AppResponse.badRequest('role not found'));
+      }
+      // check if user is in that role
+      const userRolesResult = await this.userRole.find({
+        where: {
+          user: user,
+        },
+        relations: ['role'],
+      });
+      const roles = userRolesResult.map(a => a.role);
+      const findRoles = roles.find(a => a.Name == rolename);
+      if (!findRoles) {
+        const addRole = { user: user, role: role } as UserRole;
+        await this.userRole.save(addRole);
+        const roleToDelete = userRolesResult.filter(
+          a => a.role.Name != rolename,
+        );
+        if (roleToDelete) {
+          await this.userRole.remove(roleToDelete);
+        }
+      }
+    }
+    await this.userRepo.update(user.id, user);
+
+    return AppResponse.OkSuccess({}, 'user updated');
+  }
+
+  @ApiHeader({
+    name: 'organizationId',
+    description: 'provide organization id',
+  })
+  @Get('suppliers')
   async mySupplier() {
     const myOrg = await this.appService.getOrganization();
     const orgInvite = await this.orgInvite.find({
@@ -249,18 +404,130 @@ export class OrganizationController {
     return AppResponse.OkSuccess(suppliers);
   }
 
+  @Get('suppliers/:organizationId')
+  async GetSupplier(@Param('organizationId') organizationId: string) {
+    const buyer = await this.orgService.findOne({
+      where: { id: organizationId },
+    });
+    if (!buyer) {
+      throw new NotFoundException(AppResponse.NotFound());
+    }
+    return AppResponse.OkSuccess(buyer);
+  }
+
   @ApiHeader({
     name: 'organizationId',
     description: 'provide organization id',
   })
-  @Get('my/buyer')
+  @Get('buyer')
   async myBuyer() {
     const myOrg = await this.appService.getOrganization();
     const orgInvite = await this.orgInvite.find({
       where: { inviteeOrganization: myOrg },
       relations: ['inviteeOrganization', 'invitedByOrganization'],
     });
-    const suppliers = orgInvite.map(a => a.invitedByOrganization);
+    const buyers = orgInvite.map(a => a.invitedByOrganization);
+    return AppResponse.OkSuccess(buyers);
+  }
+
+  @ApiHeader({
+    name: 'organizationId',
+    description: 'provide organization id',
+  })
+  @Get('buyer/:organizationId')
+  async GetBuyer(@Param('organizationId') organizationId: string) {
+    const buyer = await this.orgService.findOne({
+      where: { id: organizationId },
+    });
+    if (!buyer) {
+      throw new NotFoundException(AppResponse.NotFound());
+    }
+    return AppResponse.OkSuccess(buyer);
+  }
+
+  @Get(':buyerId/suppliers')
+  async GetBuyerSupplier(@Param('buyerId') buyerId: string) {
+    const buyer = await this.orgService.findOne({
+      where: { id: buyerId },
+    });
+    if (!buyer) {
+      throw new NotFoundException(AppResponse.NotFound('buyer not found'));
+    }
+    const orgInvite = await this.orgInvite.find({
+      where: { invitedByOrganization: buyer },
+      relations: ['inviteeOrganization', 'invitedByOrganization'],
+    });
+
+    const suppliers = orgInvite.map(a => a.inviteeOrganization);
     return AppResponse.OkSuccess(suppliers);
+  }
+
+  @ApiHeader({
+    name: 'organizationId',
+    description: 'provide organization id',
+  })
+  @Get('users')
+  async GetOrgUsers() {
+    const org = await this.appService.getOrganization();
+
+    const userOrg = await this.userOrgRepo.find({
+      where: { organization: org },
+      relations: ['user', 'user.userRoles', 'user.userRoles.role'],
+    });
+
+    const users = userOrg.map(a => {
+      const userRole = a.user.userRoles.map(r => {
+        const role = {
+          Name: r.role.Name,
+          Description: r.role.Description,
+          Permissions: r.role.permission,
+        } as GetRoleDto;
+        return role;
+      });
+
+      const user = {
+        email: a.user.email,
+        id: a.user.id,
+        firstName: a.user.firstName,
+        lastName: a.user.lastName,
+        phone: a.user.phone,
+        createdOn: a.user.createdOn,
+        roles: userRole,
+      } as UserDto;
+      return user;
+    });
+    return AppResponse.OkSuccess(users);
+  }
+
+  @Get('users/:userId')
+  async GetOrgUser(@Param('userId') userId: string) {
+    const result = await this.userRepo.findOne({
+      where: { id: userId },
+      relations: ['userRoles', 'userRoles.role'],
+    });
+
+    if (!result) {
+      throw new NotFoundException(AppResponse.NotFound());
+    }
+
+    const userRole = result.userRoles.map(r => {
+      const role = {
+        Name: r.role.Name,
+        Description: r.role.Description,
+        Permissions: r.role.permission,
+      } as GetRoleDto;
+      return role;
+    });
+    const user = {
+      email: result.email,
+      id: result.id,
+      firstName: result.firstName,
+      lastName: result.lastName,
+      phone: result.phone,
+      createdOn: result.createdOn,
+      roles: userRole,
+    } as UserDto;
+
+    return AppResponse.OkSuccess(user);
   }
 }

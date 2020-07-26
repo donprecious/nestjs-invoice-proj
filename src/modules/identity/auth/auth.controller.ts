@@ -77,7 +77,7 @@ export class AuthController {
     findUser.otp = null;
     findUser.otpExpiresIn = null;
     this.userRepo.update(findUser.id, findUser);
-    
+
     return AppResponse.OkSuccess(detail, 'user activated');
   }
 

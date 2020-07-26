@@ -39,6 +39,9 @@ export class User extends BaseEntity {
   @Column({ nullable: true, type: 'timestamp' })
   resetPasswordTokenExpire?: Date;
 
+  @Column({ default: 'active' })
+  status: string;
+  
   @OneToMany(
     type => UserOrganization,
     userOrganization => userOrganization.user,

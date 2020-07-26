@@ -8,18 +8,22 @@ export class OrganizationDto extends EntityDto {
 
   @AutoMap() email: string;
 
-  @AutoMap() address: string;
+  @AutoMap() address: Address;
 
   @AutoMap() phone: string;
 
-  @AutoMap() bankname: string;
+  @AutoMap() bankcode: string;
 
   @AutoMap() bankNumber: string;
 
   @AutoMap() taxId: string;
 
   @AutoMap() type: string;
+  
+  @AutoMap() status: string;
+
 }
+
 
 export class OrganizationPayloadDto {
   id: string;
@@ -29,11 +33,21 @@ export class OrganizationPayloadDto {
 
   @AutoMap() email: string;
 
-  @AutoMap() address: string;
+  @AutoMap() address: Address;
 
   @AutoMap() phone: string;
 
   @AutoMap() taxId: string;
 
+  bankcode: string;
+
+  bankNumber: string;
   @AutoMap() type: string;
+}
+
+export interface Address {
+  streetname: string;
+  city: string;
+  state: string;
+  country: string;
 }
