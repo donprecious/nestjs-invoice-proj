@@ -5,7 +5,8 @@ import { DocumentBuilder } from '@nestjs/swagger/dist/document-builder';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule); 
+  const app = await NestFactory.create(AppModule);
+  app.enableCors({ origin: '*' });
   app.setGlobalPrefix('api/scf');
   const options = new DocumentBuilder()
     .setTitle('Front edge Service Api')
