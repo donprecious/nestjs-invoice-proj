@@ -7,14 +7,14 @@ export class CreateOrganizationDto {
   name: string;
   @IsNotEmpty()
   code: string;
-  @IsEmail()
+ 
   email: string;
 
   @IsNotEmpty()
   address: Address;
   @IsNotEmpty()
   phone: string;
-  @IsNotEmpty()
+  
   bankcode: string;
   @IsNotEmpty()
   bankNumber: string;
@@ -31,16 +31,16 @@ export class EditOrganizationDto {
   name: string;
   @IsNotEmpty()
   code: string;
-  @IsEmail()
+
   email: string;
 
   @IsNotEmpty()
   address: Address;
   @IsNotEmpty()
   phone: string;
-  @IsNotEmpty()
+
   bankcode: string;
-  @IsNotEmpty()
+
   bankNumber: string;
 
   @IsNotEmpty()

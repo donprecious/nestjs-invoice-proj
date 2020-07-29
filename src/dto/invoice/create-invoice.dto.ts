@@ -53,3 +53,13 @@ export class CreateManyInvoiceBySupplierDto {
   @IsNotEmpty()
   supplierId: string;
 }
+
+export class InvoiceFilter {
+  invoiceNumber: string;
+
+ 
+  amount: number;
+  dueDate: Date;
+  paymentDate: Date;
+  supplierCode: string;
+}

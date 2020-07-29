@@ -1,3 +1,4 @@
+import { supplier } from './../../../shared/oranization/organizationType';
 import {
   PaginationQueryParam,
   PaginatedResultDto,
@@ -22,6 +23,7 @@ import {
   CreateInvoiceDto,
   CreateManyInvoiceBySupplierDto,
   CreateManyInvoiceDto,
+  InvoiceFilter,
 } from './../../../dto/invoice/create-invoice.dto';
 import {
   ApiConsumes,
@@ -43,10 +45,11 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/modules/identity/auth/jwtauth.guard';
 import { AnyFilesInterceptor } from '@nestjs/platform-express/multer/interceptors/any-files.interceptor';
-import { Any } from 'typeorm';
+import { Any, FindConditions } from 'typeorm';
 import { AppService } from 'src/services/app/app.service';
 import { EmailService } from 'src/services/notification/email/email.service';
 import { ConfigService } from '@nestjs/config';
+import moment = require('moment');
 
 @UseGuards(JwtAuthGuard)
 @ApiTags('invoice')
@@ -63,46 +66,85 @@ export class InvoiceController {
     description: 'provide organization id',
   })
   @Post()
-  async create(
-    @Body() createInvoices: CreateManyInvoiceBySupplierDto,
-    @Request() req,
-  ) {
-    let orgnizationId = req.headers['organization-id'];
-    if (!orgnizationId) {
+  async create(@Body() createInvoices: CreateManyInvoiceDto, @Request() req) {
+    const organization = await this.appService.getOrganization();
+
+    const orgnizationId = organization.id;
+
+    // validate invoices
+    const invoiceNos = createInvoices.invoices.map(a => a.invoiceNumber);
+    const uniqueInvoiceNo = _.uniq(invoiceNos);
+    const duplicateInvoice = _.filter(invoiceNos, (val, i, iteratee) =>
+      _.includes(iteratee, val, Number(i) + 1),
+    );
+
+    if (duplicateInvoice.length > 0) {
       throw new BadRequestException(
-        AppResponse.badRequest('organization-id not present in header'),
+        AppResponse.badRequest(
+          'duplicate invoiceNo found [] ' + duplicateInvoice,
+        ),
       );
     }
-    orgnizationId = orgnizationId.toString();
+
+    // validate unique inovice
+    //
+    const uniqueOrgInvoice = await this.invoiceRepo.find({
+      where: {
+        invoiceNumber: In(uniqueInvoiceNo),
+        createdByOrganization: organization,
+      },
+    });
+    const existedInvoiceNo = uniqueOrgInvoice.map(a => a.invoiceNumber);
+
+    const duplicateExistingCode = _.intersection(
+      uniqueInvoiceNo,
+      existedInvoiceNo,
+    );
+    if (duplicateExistingCode.length > 0) {
+      // the fellowing existing code already exist
+      throw new BadRequestException(
+        AppResponse.badRequest(
+          'the fellowing invoice number already exist, in your invoice [] ' +
+            duplicateExistingCode,
+        ),
+      );
+    }
+
+    const uniqueCodes = _.uniq(
+      createInvoices.invoices.map(a => a.supplierCode),
+    );
+
+    const uniqueOrganizations = await this.orgRepo.find({
+      where: { code: In(uniqueCodes) },
+    });
+    const uniqueOrgCodes = uniqueOrganizations.map(a => a.code);
+    const notfoundCodes = _.difference(uniqueCodes, uniqueOrgCodes);
+
+    if (notfoundCodes.length > 0) {
+      throw new BadRequestException(
+        AppResponse.badRequest(
+          'the fellowing organization code where not found [] ' + notfoundCodes,
+        ),
+      );
+    }
 
     const invoices = [] as Invoice[];
 
-    const createdByOrg = await this.orgRepo.findOne({
-      where: { id: orgnizationId },
-    });
-    if (!createdByOrg)
-      throw new BadRequestException(
-        AppResponse.badRequest(
-          ' organization (with organization-id) cannot be found',
+    for (const row of createInvoices.invoices) {
+      const invoice = {
+        amount: row.amount,
+        invoiceNumber: row.invoiceNumber,
+        currencyCode: row.currencyCode,
+        dueDate: row.dueDate,
+        createdByOrganization: organization,
+        createdForOrganization: uniqueOrganizations.find(
+          a => a.code == row.supplierCode,
         ),
-      );
-
-    const supplierOrg = await this.orgRepo.findOne({
-      where: { id: createInvoices.supplierId },
-    });
-    if (!supplierOrg)
-      throw new BadRequestException(
-        AppResponse.badRequest('the supplier organization  is cannot be found'),
-      );
-
-    createInvoices.invoices.forEach(item => {
-      const invoice = item as Invoice;
-      invoice.createdByOrganization = createdByOrg;
-      invoice.createdForOrganization = supplierOrg;
+      } as Invoice;
       invoices.push(invoice);
-    });
+    }
+    this.invoiceRepo.save(invoices);
 
-    await this.invoiceRepo.save(invoices);
     return AppResponse.OkSuccess(createInvoices);
   }
 
@@ -285,13 +327,45 @@ export class InvoiceController {
   }
 
   @Get()
-  async GetAllInvoice(@Query() param: PaginationQueryParam) {
+  async GetAllInvoice(
+    @Query() param: PaginationQueryParam,
+    @Query() filter: InvoiceFilter,
+  ) {
     console.log('param', param);
     const skippedItems = (param.page - 1) * param.limit;
+    let where: FindConditions<Invoice> = {};
+    if(filter.amount){
+      where.amount= filter.amount
+    }
+    if(filter.invoiceNumber){
+      where.invoiceNumber = filter.invoiceNumber
+    }
+    if(filter.supplierCode){
+      const supplier = await this.orgRepo.findOne({where: {code: filter.supplierCode}}); 
+      if(supplier){
+        where.createdForOrganization = supplier
+      }
+    }
+    if(filter.dueDate){
+       if(moment(filter.dueDate).isValid()){
+         const date = moment(moment(filter.dueDate).format('YYYY MM DD')).toDate(); 
+         where.dueDate = date;
+      }
+    }
+
+  // todo uncomment when entity has payment date
+  //   if(filter.paymentDate){
+  //     if(moment(filter.paymentDate).isValid()){
+  //       const date = moment(moment(filter.paymentDate).format('YYYY MM DD')).toDate(); 
+  //       where.paymentDate = date;
+  //    }
+  //  } 
+  
     const result = await this.invoiceRepo.findAndCount({
       relations: ['createdByOrganization', 'createdForOrganization'],
       skip: skippedItems,
       take: param.limit,
+      where: where
     });
     const pageRes: PaginatedResultDto = {
       data: result[0],

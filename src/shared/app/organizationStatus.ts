@@ -4,3 +4,4 @@ export const organizationStatus = {
   active: statusConstant.active,
   inactive: statusConstant.inactive,
 };
+
