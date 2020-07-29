@@ -1,3 +1,4 @@
+import { organizationType } from './../../../../shared/app/organizationType';
 import { UserDto } from './../../../../dto/user/user.dto';
 import { EditOrganizationDto } from './../../../../dto/organization/create-organization.dto';
 import { GenerateRandom } from './../../../../shared/helpers/utility';
@@ -388,15 +389,15 @@ export class OrganizationController {
     return AppResponse.OkSuccess({}, 'user updated');
   }
 
-  @ApiHeader({
-    name: 'organizationId',
-    description: 'provide organization id',
-  })
-  @Get('suppliers')
-  async mySupplier() {
-    const myOrg = await this.appService.getOrganization();
+  // get all suppliers invitted by a buyer
+  @Get('suppliers/buyer/:buyerId')
+  async mySupplier(@Param('buyerId') buyerId: string) {
+    const buyerOrg = await this.orgService.findOne({ where: { id: buyerId } });
+    if (!buyerOrg) {
+      throw new NotFoundException(AppResponse.NotFound('buer not found'));
+    }
     const orgInvite = await this.orgInvite.find({
-      where: { invitedByOrganization: myOrg },
+      where: { invitedByOrganization: buyerOrg },
       relations: ['inviteeOrganization', 'invitedByOrganization'],
     });
 
@@ -404,62 +405,54 @@ export class OrganizationController {
     return AppResponse.OkSuccess(suppliers);
   }
 
-  @Get('suppliers/:organizationId')
-  async GetSupplier(@Param('organizationId') organizationId: string) {
-    const buyer = await this.orgService.findOne({
-      where: { id: organizationId },
+  @Get('suppliers')
+  async GetSupplier() {
+    const buyer = await this.orgService.find({
+      where: { type: organizationType.supplier },
     });
-    if (!buyer) {
-      throw new NotFoundException(AppResponse.NotFound());
-    }
+
     return AppResponse.OkSuccess(buyer);
   }
 
-  @ApiHeader({
-    name: 'organizationId',
-    description: 'provide organization id',
-  })
-  @Get('buyer')
-  async myBuyer() {
-    const myOrg = await this.appService.getOrganization();
-    const orgInvite = await this.orgInvite.find({
-      where: { inviteeOrganization: myOrg },
-      relations: ['inviteeOrganization', 'invitedByOrganization'],
+  @Get('buyers')
+  async GetBuyers() {
+    const buyers = await this.orgService.find({
+      where: { type: organizationType.buyer },
     });
-    const buyers = orgInvite.map(a => a.invitedByOrganization);
     return AppResponse.OkSuccess(buyers);
   }
 
-  @ApiHeader({
-    name: 'organizationId',
-    description: 'provide organization id',
-  })
-  @Get('buyer/:organizationId')
-  async GetBuyer(@Param('organizationId') organizationId: string) {
-    const buyer = await this.orgService.findOne({
-      where: { id: organizationId },
+  //get all buyers a supplier belongs to
+  @Get('buyers/supplier/:supplierId')
+  async GetBuyerSupplier(@Param('supplierId') supplierId: string) {
+    const supplier = await this.orgService.findOne({
+      where: { id: supplierId },
     });
-    if (!buyer) {
-      throw new NotFoundException(AppResponse.NotFound());
-    }
-    return AppResponse.OkSuccess(buyer);
-  }
-
-  @Get(':buyerId/suppliers')
-  async GetBuyerSupplier(@Param('buyerId') buyerId: string) {
-    const buyer = await this.orgService.findOne({
-      where: { id: buyerId },
-    });
-    if (!buyer) {
-      throw new NotFoundException(AppResponse.NotFound('buyer not found'));
+    if (!supplier) {
+      throw new NotFoundException(AppResponse.NotFound('supplier not found'));
     }
     const orgInvite = await this.orgInvite.find({
-      where: { invitedByOrganization: buyer },
+      where: { inviteeOrganization: supplier },
       relations: ['inviteeOrganization', 'invitedByOrganization'],
     });
 
     const suppliers = orgInvite.map(a => a.inviteeOrganization);
     return AppResponse.OkSuccess(suppliers);
+  }
+  @Get(':organizationId')
+  async Get(@Param('organizationId') organizationId: string) {
+    const organization = await this.orgService.findOne({
+      where: { id: organizationId },
+    });
+
+    // check if orgaization exist
+    if (!organization) {
+      throw new BadRequestException(
+        AppResponse.badRequest('organization not found'),
+      );
+    }
+
+    return AppResponse.OkSuccess(organization);
   }
 
   @ApiHeader({
