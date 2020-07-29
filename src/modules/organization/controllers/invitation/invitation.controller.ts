@@ -6,6 +6,7 @@ import { Mapper } from '@nartc/automapper';
 import {
   ConfirmOrganizationWithUserDto,
   ConfirmUserDto,
+  UpdateInvitationStatusDto,
 } from './../../../../dto/user/create-organization-user.dto';
 import { AppResponse } from './../../../../shared/helpers/appresponse';
 import { UserDto } from './../../../../dto/user/user.dto';
@@ -116,10 +117,10 @@ export class InvitationController {
     }
   }
 
-  @Put(':invitationId/organization/confirm')
-  async confirmOrganizationAndUser(
+  @Put(':invitationId/update')
+  async UpdateInvitation(
     @Param('invitationId', new ParseUUIDPipe()) invitationId: string,
-    @Body() confirmUserOrg: ConfirmOrganizationWithUserDto,
+    @Body() updateStatus: UpdateInvitationStatusDto,
   ) {
     const invite = await this.invitationRepo.findOne({
       where: { id: invitationId },
@@ -132,23 +133,7 @@ export class InvitationController {
       );
     }
 
-    let updatedOrganisation = invite.organization;
-    updatedOrganisation.address = confirmUserOrg.orgainzation.address;
-    updatedOrganisation.bankNumber = confirmUserOrg.orgainzation.bankNumber;
-    updatedOrganisation.bankcode = confirmUserOrg.orgainzation.bankcode;
-    updatedOrganisation.code = confirmUserOrg.orgainzation.code;
-    updatedOrganisation.email = confirmUserOrg.orgainzation.email;
-    updatedOrganisation.name = confirmUserOrg.orgainzation.name;
-    updatedOrganisation.phone = confirmUserOrg.orgainzation.phone;
-    updatedOrganisation.taxId = confirmUserOrg.orgainzation.taxId;
-    await this.orgRepo.update(updatedOrganisation.id, updatedOrganisation);
-    const userToUpdate = confirmUserOrg.user;
     let updateUser = invite.user;
-    updateUser.firstName = userToUpdate.firstName;
-    updateUser.lastName = userToUpdate.lastName;
-
-    updateUser.phone = userToUpdate.phone;
-
     const otp = GenerateRandom(10315, 99929);
     updateUser.otp = otp;
     const expiretime = moment().add(10, 'minutes');
@@ -157,13 +142,8 @@ export class InvitationController {
 
     await this.userRepo.update(invite.user.id, updateUser);
 
-    invite.status = invitationStatus.accepted;
+    invite.status = updateStatus.status;
     await this.invitationRepo.update(invite.id, invite);
-    const userDto = (userToUpdate as unknown) as UserDto;
-    userDto.id = updateUser.id;
-
-    const orgDto = confirmUserOrg.orgainzation as OrganizationDto;
-    orgDto.id = updatedOrganisation.id;
 
     const message = `Invitation Accepted! , Activate your account with this Otp : <b>${otp}</b>
     `;
@@ -173,173 +153,9 @@ export class InvitationController {
       subject: 'Activate your Account',
     };
     this.emailSerice.sendEmail(emailMessage).subscribe(d => console.log(d));
-    return AppResponse.OkSuccess(
-      {
-        orgainization: userDto,
-        user: orgDto,
-      },
-      'invitation accepted and confirmed',
-    );
+    return AppResponse.OkSuccess({}, 'invitation accepted and confirmed');
     // }
   }
-
-  @Put(':invitationId/organization/cancel')
-  async cancelOrganizationAndUser(
-    @Param('invitationId', new ParseUUIDPipe()) invitationId: string,
-    @Body() confirmUserOrg: ConfirmOrganizationWithUserDto,
-  ) {
-    const invite = await this.invitationRepo.findOne({
-      where: { id: invitationId },
-      relations: ['user', 'organization'],
-    });
-    if (!invite) {
-      throw new HttpException(
-        AppResponse.NotFound('invitation not found'),
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    let updatedOrganisation = invite.organization;
-    updatedOrganisation.address = confirmUserOrg.orgainzation.address;
-    updatedOrganisation.bankNumber = confirmUserOrg.orgainzation.bankNumber;
-    updatedOrganisation.bankcode = confirmUserOrg.orgainzation.bankcode;
-    updatedOrganisation.code = confirmUserOrg.orgainzation.code;
-    updatedOrganisation.email = confirmUserOrg.orgainzation.email;
-    updatedOrganisation.name = confirmUserOrg.orgainzation.name;
-    updatedOrganisation.phone = confirmUserOrg.orgainzation.phone;
-    updatedOrganisation.taxId = confirmUserOrg.orgainzation.taxId;
-    await this.orgRepo.update(updatedOrganisation.id, updatedOrganisation);
-    const userToUpdate = confirmUserOrg.user;
-    let updateUser = invite.user;
-    updateUser.firstName = userToUpdate.firstName;
-    updateUser.lastName = userToUpdate.lastName;
-    updateUser.email = userToUpdate.email;
-    updateUser.phone = userToUpdate.phone;
-
-    await this.userRepo.update(invite.user.id, updateUser);
-
-    invite.status = invitationStatus.canceled;
-    await this.invitationRepo.update(invite.id, invite);
-    const userDto = (userToUpdate as unknown) as UserDto;
-    userDto.id = updateUser.id;
-
-    const orgDto = confirmUserOrg.orgainzation as OrganizationDto;
-    orgDto.id = updatedOrganisation.id;
-    return AppResponse.OkSuccess(
-      {
-        orgainization: userDto,
-        user: orgDto,
-      },
-      'invitation accepted and confirmed',
-    );
-    // }
-  }
-
-  @Put(':invitationId/user/confirm')
-  async confirmUser(
-    @Param('invitationId', new ParseUUIDPipe()) invitationId: string,
-    @Body() confirmUserOrg: ConfirmUserDto,
-  ) {
-    const invite = await this.invitationRepo.findOne({
-      where: { id: invitationId },
-      relations: ['user', 'organization'],
-    });
-    if (!invite) {
-      throw new HttpException(
-        AppResponse.NotFound('invitation not found'),
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    if (
-      invite.confirmationType != roleTypes.supplier ||
-      invite.confirmationType != roleTypes.buyer
-    ) {
-      throw new HttpException(
-        AppResponse.badRequest(
-          'invalid invite, should be just a user for supplier or buyer',
-        ),
-        HttpStatus.BAD_REQUEST,
-      );
-    } else {
-      const userToUpdate = confirmUserOrg.user;
-      const updateUser = invite.user;
-      updateUser.firstName = userToUpdate.firstName;
-      updateUser.lastName = userToUpdate.lastName;
-      updateUser.email = userToUpdate.email;
-      updateUser.phone = userToUpdate.phone;
-      invite.status = invitationStatus.accepted;
-
-      const otp = GenerateRandom(10315, 99929);
-      updateUser.otp = otp;
-      const expiretime = moment().add(10, 'minutes');
-      updateUser.otpExpiresIn = expiretime.toDate();
-      await this.userRepo.update(invite.user.id, updateUser);
-
-      await this.invitationRepo.update(invite.id, invite);
-
-      const userDto = (userToUpdate as unknown) as UserDto;
-      userDto.id = updateUser.id;
-
-      const message = ` Activate your account with your Otp : <b>${otp}</b>
-      `;
-      const emailMessage: EmailDto = {
-        to: [updateUser.email],
-        body: message,
-        subject: 'Activate your Account',
-      };
-      this.emailSerice.sendEmail(emailMessage).subscribe(d => console.log(d));
-      return AppResponse.OkSuccess(
-        userDto,
-        'invitation accepted and confirmed',
-      );
-    }
-  }
-
-  @Put(':invitationId/user/cancel')
-  async CancelUser(
-    @Param('invitationId', new ParseUUIDPipe()) invitationId: string,
-    @Body() confirmUserOrg: ConfirmUserDto,
-  ) {
-    const invite = await this.invitationRepo.findOne({
-      where: { id: invitationId },
-      relations: ['user', 'organization'],
-    });
-    if (!invite) {
-      throw new HttpException(
-        AppResponse.NotFound('invitation not found'),
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    if (
-      invite.confirmationType != roleTypes.supplier ||
-      invite.confirmationType != roleTypes.buyer
-    ) {
-      throw new HttpException(
-        AppResponse.badRequest(
-          'invalid invite, should be just a user for supplier or buyer',
-        ),
-        HttpStatus.BAD_REQUEST,
-      );
-    } else {
-      const userToUpdate = confirmUserOrg.user;
-      const updateUser = invite.user;
-      updateUser.firstName = userToUpdate.firstName;
-      updateUser.lastName = userToUpdate.lastName;
-      updateUser.email = userToUpdate.email;
-      updateUser.phone = userToUpdate.phone;
-      await this.userRepo.update(invite.user.id, updateUser);
-      invite.status = invitationStatus.canceled;
-      await this.invitationRepo.update(invite.id, invite);
-
-      const userDto = (userToUpdate as unknown) as UserDto;
-      userDto.id = updateUser.id;
-      return AppResponse.OkSuccess(
-        userDto,
-        'invitation accepted and confirmed',
-      );
-    }
-  }
-
   @Get(':invitationId/resend-otp')
   async ResendOtp(
     @Param('invitationId', new ParseUUIDPipe()) invitationId: string,
@@ -372,5 +188,228 @@ export class InvitationController {
     };
     this.emailSerice.sendEmail(emailMessage).subscribe(d => console.log(d));
     return AppResponse.OkSuccess(null, 'otp sent');
-  }
+    }
+  // @Put(':invitationId/organization/confirm')
+  // async confirmOrganizationAndUser(
+  //   @Param('invitationId', new ParseUUIDPipe()) invitationId: string,
+  //   @Body() confirmUserOrg: ConfirmOrganizationWithUserDto,
+  // ) {
+  //   const invite = await this.invitationRepo.findOne({
+  //     where: { id: invitationId },
+  //     relations: ['user', 'organization'],
+  //   });
+  //   if (!invite) {
+  //     throw new HttpException(
+  //       AppResponse.NotFound('invitation not found'),
+  //       HttpStatus.BAD_REQUEST,
+  //     );
+  //   }
+
+  //   let updatedOrganisation = invite.organization;
+  //   updatedOrganisation.address = confirmUserOrg.orgainzation.address;
+  //   updatedOrganisation.bankNumber = confirmUserOrg.orgainzation.bankNumber;
+  //   updatedOrganisation.bankcode = confirmUserOrg.orgainzation.bankcode;
+  //   updatedOrganisation.code = confirmUserOrg.orgainzation.code;
+  //   updatedOrganisation.email = confirmUserOrg.orgainzation.email;
+  //   updatedOrganisation.name = confirmUserOrg.orgainzation.name;
+  //   updatedOrganisation.phone = confirmUserOrg.orgainzation.phone;
+  //   updatedOrganisation.taxId = confirmUserOrg.orgainzation.taxId;
+  //   await this.orgRepo.update(updatedOrganisation.id, updatedOrganisation);
+  //   const userToUpdate = confirmUserOrg.user;
+  //   let updateUser = invite.user;
+  //   updateUser.firstName = userToUpdate.firstName;
+  //   updateUser.lastName = userToUpdate.lastName;
+
+  //   updateUser.phone = userToUpdate.phone;
+
+  //   const otp = GenerateRandom(10315, 99929);
+  //   updateUser.otp = otp;
+  //   const expiretime = moment().add(10, 'minutes');
+  //   updateUser.otpExpiresIn = expiretime.toDate();
+  //   //todo send email
+
+  //   await this.userRepo.update(invite.user.id, updateUser);
+
+  //   invite.status = invitationStatus.accepted;
+  //   await this.invitationRepo.update(invite.id, invite);
+  //   const userDto = (userToUpdate as unknown) as UserDto;
+  //   userDto.id = updateUser.id;
+
+  //   const orgDto = confirmUserOrg.orgainzation as OrganizationDto;
+  //   orgDto.id = updatedOrganisation.id;
+
+  //   const message = `Invitation Accepted! , Activate your account with this Otp : <b>${otp}</b>
+  //   `;
+  //   const emailMessage: EmailDto = {
+  //     to: [updateUser.email],
+  //     body: message,
+  //     subject: 'Activate your Account',
+  //   };
+  //   this.emailSerice.sendEmail(emailMessage).subscribe(d => console.log(d));
+  //   return AppResponse.OkSuccess(
+  //     {
+  //       orgainization: userDto,
+  //       user: orgDto,
+  //     },
+  //     'invitation accepted and confirmed',
+  //   );
+  //   // }
+  // }
+
+  // @Put(':invitationId/organization/cancel')
+  // async cancelOrganizationAndUser(
+  //   @Param('invitationId', new ParseUUIDPipe()) invitationId: string,
+  //   @Body() confirmUserOrg: ConfirmOrganizationWithUserDto,
+  // ) {
+  //   const invite = await this.invitationRepo.findOne({
+  //     where: { id: invitationId },
+  //     relations: ['user', 'organization'],
+  //   });
+  //   if (!invite) {
+  //     throw new HttpException(
+  //       AppResponse.NotFound('invitation not found'),
+  //       HttpStatus.BAD_REQUEST,
+  //     );
+  //   }
+
+  //   let updatedOrganisation = invite.organization;
+  //   updatedOrganisation.address = confirmUserOrg.orgainzation.address;
+  //   updatedOrganisation.bankNumber = confirmUserOrg.orgainzation.bankNumber;
+  //   updatedOrganisation.bankcode = confirmUserOrg.orgainzation.bankcode;
+  //   updatedOrganisation.code = confirmUserOrg.orgainzation.code;
+  //   updatedOrganisation.email = confirmUserOrg.orgainzation.email;
+  //   updatedOrganisation.name = confirmUserOrg.orgainzation.name;
+  //   updatedOrganisation.phone = confirmUserOrg.orgainzation.phone;
+  //   updatedOrganisation.taxId = confirmUserOrg.orgainzation.taxId;
+  //   await this.orgRepo.update(updatedOrganisation.id, updatedOrganisation);
+  //   const userToUpdate = confirmUserOrg.user;
+  //   let updateUser = invite.user;
+  //   updateUser.firstName = userToUpdate.firstName;
+  //   updateUser.lastName = userToUpdate.lastName;
+  //   updateUser.email = userToUpdate.email;
+  //   updateUser.phone = userToUpdate.phone;
+
+  //   await this.userRepo.update(invite.user.id, updateUser);
+
+  //   invite.status = invitationStatus.canceled;
+  //   await this.invitationRepo.update(invite.id, invite);
+  //   const userDto = (userToUpdate as unknown) as UserDto;
+  //   userDto.id = updateUser.id;
+
+  //   const orgDto = confirmUserOrg.orgainzation as OrganizationDto;
+  //   orgDto.id = updatedOrganisation.id;
+  //   return AppResponse.OkSuccess(
+  //     {
+  //       orgainization: userDto,
+  //       user: orgDto,
+  //     },
+  //     'invitation accepted and confirmed',
+  //   );
+  //   // }
+  // }
+
+  // @Put(':invitationId/user/confirm')
+  // async confirmUser(
+  //   @Param('invitationId', new ParseUUIDPipe()) invitationId: string,
+  //   @Body() confirmUserOrg: ConfirmUserDto,
+  // ) {
+  //   const invite = await this.invitationRepo.findOne({
+  //     where: { id: invitationId },
+  //     relations: ['user', 'organization'],
+  //   });
+  //   if (!invite) {
+  //     throw new HttpException(
+  //       AppResponse.NotFound('invitation not found'),
+  //       HttpStatus.BAD_REQUEST,
+  //     );
+  //   }
+  //   if (
+  //     invite.confirmationType != roleTypes.supplier ||
+  //     invite.confirmationType != roleTypes.buyer
+  //   ) {
+  //     throw new HttpException(
+  //       AppResponse.badRequest(
+  //         'invalid invite, should be just a user for supplier or buyer',
+  //       ),
+  //       HttpStatus.BAD_REQUEST,
+  //     );
+  //   } else {
+  //     const userToUpdate = confirmUserOrg.user;
+  //     const updateUser = invite.user;
+  //     updateUser.firstName = userToUpdate.firstName;
+  //     updateUser.lastName = userToUpdate.lastName;
+  //     updateUser.email = userToUpdate.email;
+  //     updateUser.phone = userToUpdate.phone;
+  //     invite.status = invitationStatus.accepted;
+
+  //     const otp = GenerateRandom(10315, 99929);
+  //     updateUser.otp = otp;
+  //     const expiretime = moment().add(10, 'minutes');
+  //     updateUser.otpExpiresIn = expiretime.toDate();
+  //     await this.userRepo.update(invite.user.id, updateUser);
+
+  //     await this.invitationRepo.update(invite.id, invite);
+
+  //     const userDto = (userToUpdate as unknown) as UserDto;
+  //     userDto.id = updateUser.id;
+
+  //     const message = ` Activate your account with your Otp : <b>${otp}</b>
+  //     `;
+  //     const emailMessage: EmailDto = {
+  //       to: [updateUser.email],
+  //       body: message,
+  //       subject: 'Activate your Account',
+  //     };
+  //     this.emailSerice.sendEmail(emailMessage).subscribe(d => console.log(d));
+  //     return AppResponse.OkSuccess(
+  //       userDto,
+  //       'invitation accepted and confirmed',
+  //     );
+  //   }
+  // }
+
+  // @Put(':invitationId/user/cancel')
+  // async CancelUser(
+  //   @Param('invitationId', new ParseUUIDPipe()) invitationId: string,
+  //   @Body() confirmUserOrg: ConfirmUserDto,
+  // ) {
+  //   const invite = await this.invitationRepo.findOne({
+  //     where: { id: invitationId },
+  //     relations: ['user', 'organization'],
+  //   });
+  //   if (!invite) {
+  //     throw new HttpException(
+  //       AppResponse.NotFound('invitation not found'),
+  //       HttpStatus.BAD_REQUEST,
+  //     );
+  //   }
+  //   if (
+  //     invite.confirmationType != roleTypes.supplier ||
+  //     invite.confirmationType != roleTypes.buyer
+  //   ) {
+  //     throw new HttpException(
+  //       AppResponse.badRequest(
+  //         'invalid invite, should be just a user for supplier or buyer',
+  //       ),
+  //       HttpStatus.BAD_REQUEST,
+  //     );
+  //   } else {
+  //     const userToUpdate = confirmUserOrg.user;
+  //     const updateUser = invite.user;
+  //     updateUser.firstName = userToUpdate.firstName;
+  //     updateUser.lastName = userToUpdate.lastName;
+  //     updateUser.email = userToUpdate.email;
+  //     updateUser.phone = userToUpdate.phone;
+  //     await this.userRepo.update(invite.user.id, updateUser);
+  //     invite.status = invitationStatus.canceled;
+  //     await this.invitationRepo.update(invite.id, invite);
+
+  //     const userDto = (userToUpdate as unknown) as UserDto;
+  //     userDto.id = updateUser.id;
+  //     return AppResponse.OkSuccess(
+  //       userDto,
+  //       'invitation accepted and confirmed',
+  //     );
+  //   }
+  // }
 }
