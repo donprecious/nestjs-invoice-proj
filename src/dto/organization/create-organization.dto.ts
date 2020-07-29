@@ -16,9 +16,9 @@ export class CreateOrganizationDto {
   phone: string;
   
   bankcode: string;
-  @IsNotEmpty()
+ 
   bankNumber: string;
-  @IsNotEmpty()
+ 
   taxId: string;
 
   @IsIn(['supplier', 'buyer'])
@@ -43,7 +43,6 @@ export class EditOrganizationDto {
 
   bankNumber: string;
 
-  @IsNotEmpty()
   taxId: string;
 
   @IsIn(['active', 'inactive'])
