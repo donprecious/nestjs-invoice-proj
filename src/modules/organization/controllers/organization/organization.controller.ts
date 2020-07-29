@@ -179,7 +179,7 @@ export class OrganizationController {
 
     const currentUser = await this.appService.getCurrentUser();
 
-    const org = createUserOrg.orgainzation as Organization;
+    const org = createUserOrg.organization as Organization;
 
     // check if an org exist in the db
     const existedOrg = await this.orgService.find({

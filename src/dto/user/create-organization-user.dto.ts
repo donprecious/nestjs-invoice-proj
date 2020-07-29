@@ -7,7 +7,7 @@ import { Type } from 'class-transformer';
 export class CreateOrganizationUserDto {
   @ValidateNested()
   @Type(() => CreateOrganizationDto)
-  orgainzation: CreateOrganizationDto;
+  organization: CreateOrganizationDto;
 
   @ValidateNested()
   @Type(() => CreateUserDto)
