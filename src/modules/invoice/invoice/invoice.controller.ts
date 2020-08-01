@@ -152,7 +152,7 @@ export class InvoiceController {
     name: 'organizationId',
     description: 'provide organization id',
   })
-  @Post('upload/:supplierId')
+  @Post('upload')
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(AnyFilesInterceptor())
   async uploadFile(
@@ -365,7 +365,8 @@ export class InvoiceController {
       relations: ['createdByOrganization', 'createdForOrganization'],
       skip: skippedItems,
       take: param.limit,
-      where: where
+      where: where,
+      
     });
     const pageRes: PaginatedResultDto = {
       data: result[0],

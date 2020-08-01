@@ -522,5 +522,6 @@ export class OrganizationController {
     } as UserDto;
 
     return AppResponse.OkSuccess(user);
-  }
+  } 
+  
 }
