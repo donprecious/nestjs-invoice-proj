@@ -12,6 +12,7 @@ async function bootstrap() {
     .setTitle('Front edge Service Api')
     .setDescription('Front edge api ')
     .setVersion('1.0')
+    .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('api/scf/doc', app, document);

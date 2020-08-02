@@ -19,11 +19,9 @@ export class OrganizationDto extends EntityDto {
   @AutoMap() taxId: string;
 
   @AutoMap() type: string;
-  
+
   @AutoMap() status: string;
-
 }
-
 
 export class OrganizationPayloadDto {
   id: string;
@@ -50,4 +48,8 @@ export interface Address {
   city: string;
   state: string;
   country: string;
+}
+
+export class OrganizationFilter {
+  search?: string;
 }

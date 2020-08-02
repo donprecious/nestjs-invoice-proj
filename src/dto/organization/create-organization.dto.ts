@@ -24,6 +24,8 @@ export class CreateOrganizationDto {
   @IsIn(['supplier', 'buyer'])
   @IsNotEmpty()
   type: string;
+
+  buyerId: string;
 }
 
 export class EditOrganizationDto {

@@ -39,6 +39,21 @@ export class AppService {
     return organization;
   }
 
+  async FindOrganization(orgnizationId): Promise<Organization> {
+ 
+    const organization = await this.orgRepo.findOne({
+      where: { id: orgnizationId },
+    });
+    if (!organization) {
+      throw new NotFoundException(
+        AppResponse.NotFound(
+          'organization from header {organization-id} not found',
+        ),
+      );
+    }
+    return organization;
+  }
+
   getLoggedUser(): JwtPayloadDto {
     const request = this.request as any;
     const user = request.user as JwtPayloadDto;
