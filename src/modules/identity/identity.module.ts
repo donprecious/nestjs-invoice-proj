@@ -17,7 +17,7 @@ import { ConfigService } from '@nestjs/config';
     JwtModule.registerAsync({
       useFactory: (configService: ConfigService) => ({
         secret: configService.get(ConfigConstant.jwtSecret),
-        signOptions: { expiresIn: '30m' },
+        signOptions: { expiresIn: '15m' },
         // if you want to use token with expiration date
         // signOptions: {
         //     expiresIn: configService.getNumber('JWT_EXPIRATION_TIME'),
