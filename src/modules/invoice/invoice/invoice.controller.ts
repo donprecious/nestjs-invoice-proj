@@ -1,4 +1,4 @@
-inimport { supplier } from './../../../shared/oranization/organizationType';
+import { supplier } from './../../../shared/oranization/organizationType';
 import {
   PaginationQueryParam,
   PaginatedResultDto,
