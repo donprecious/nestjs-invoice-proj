@@ -116,7 +116,7 @@ export class AuthController {
       return rol;
     });
 
-    const isCorrect = compare(loginDto.password, findUser.passwordHash);
+    const isCorrect = await compare(loginDto.password, findUser.passwordHash);
     if (!isCorrect) {
       throw new BadRequestException(
         AppResponse.badRequest('invalid login details'),
