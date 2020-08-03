@@ -57,9 +57,12 @@ export class CreateManyInvoiceBySupplierDto {
 export class InvoiceFilter {
   invoiceNumber: string;
 
- 
   amount: number;
-  dueDate: Date;
-  paymentDate: Date;
+  fromDueDate: Date;
+  toDueDate: Date;
+
+  fromPaymentDate: Date;
+  toPaymentDate: Date;
+
   supplierCode: string;
 }

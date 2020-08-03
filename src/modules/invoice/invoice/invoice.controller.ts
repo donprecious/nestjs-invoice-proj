@@ -45,7 +45,7 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/modules/identity/auth/jwtauth.guard';
 import { AnyFilesInterceptor } from '@nestjs/platform-express/multer/interceptors/any-files.interceptor';
-import { Any, FindConditions } from 'typeorm';
+import { Any, FindConditions, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { AppService } from 'src/services/app/app.service';
 import { EmailService } from 'src/services/notification/email/email.service';
 import { ConfigService } from '@nestjs/config';
@@ -333,40 +333,51 @@ export class InvoiceController {
   ) {
     console.log('param', param);
     const skippedItems = (param.page - 1) * param.limit;
-    let where: FindConditions<Invoice> = {};
-    if(filter.amount){
-      where.amount= filter.amount
+    const where: FindConditions<Invoice> = {};
+    if (filter.amount) {
+      where.amount = filter.amount;
     }
-    if(filter.invoiceNumber){
-      where.invoiceNumber = filter.invoiceNumber
+    if (filter.invoiceNumber) {
+      where.invoiceNumber = filter.invoiceNumber;
     }
-    if(filter.supplierCode){
-      const supplier = await this.orgRepo.findOne({where: {code: filter.supplierCode}}); 
-      if(supplier){
-        where.createdForOrganization = supplier
+    if (filter.supplierCode) {
+      const supplier = await this.orgRepo.findOne({
+        where: { code: filter.supplierCode },
+      });
+      if (supplier) {
+        where.createdForOrganization = supplier;
       }
     }
-    if(filter.dueDate){
-       if(moment(filter.dueDate).isValid()){
-         const date = moment(moment(filter.dueDate).format('YYYY MM DD')).toDate(); 
-         where.dueDate = date;
+    if (filter.fromDueDate) {
+      if (moment(filter.fromDueDate).isValid()) {
+        const date = moment(
+          moment(filter.fromDueDate).format('YYYY MM DD'),
+        ).toDate();
+        where.dueDate = MoreThanOrEqual(date);
+      }
+    }
+    if (filter.toDueDate) {
+      if (moment(filter.toDueDate).isValid()) {
+        const date = moment(
+          moment(filter.toDueDate).format('YYYY MM DD'),
+        ).toDate();
+        where.dueDate = LessThanOrEqual(date);
       }
     }
 
-  // todo uncomment when entity has payment date
-  //   if(filter.paymentDate){
-  //     if(moment(filter.paymentDate).isValid()){
-  //       const date = moment(moment(filter.paymentDate).format('YYYY MM DD')).toDate(); 
-  //       where.paymentDate = date;
-  //    }
-  //  } 
-  
+    // todo uncomment when entity has payment date
+    //   if(filter.paymentDate){
+    //     if(moment(filter.paymentDate).isValid()){
+    //       const date = moment(moment(filter.paymentDate).format('YYYY MM DD')).toDate();
+    //       where.paymentDate = date;
+    //    }
+    //  }
+
     const result = await this.invoiceRepo.findAndCount({
       relations: ['createdByOrganization', 'createdForOrganization'],
       skip: skippedItems,
       take: param.limit,
       where: where,
-      
     });
     const pageRes: PaginatedResultDto = {
       data: result[0],

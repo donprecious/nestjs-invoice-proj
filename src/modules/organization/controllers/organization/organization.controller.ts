@@ -1,3 +1,4 @@
+import { OrganizationFilter } from './../../../../dto/organization/organization.dto';
 import { organizationType } from './../../../../shared/app/organizationType';
 import { UserDto } from './../../../../dto/user/user.dto';
 import { EditOrganizationDto } from './../../../../dto/organization/create-organization.dto';
@@ -38,7 +39,7 @@ import {
   Get,
   UseGuards,
   Param,
-  Put,
+  Put, Query
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger/dist/decorators/api-use-tags.decorator';
 import { Organization } from 'src/entities/organization.entity';
@@ -54,7 +55,7 @@ import { JwtAuthGuard } from 'src/modules/identity/auth/jwtauth.guard';
 import moment = require('moment');
 import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception';
 import { String } from 'lodash';
-import { PromiseUtils } from 'typeorm';
+import { PromiseUtils, FindConditions, Like } from 'typeorm';
 import { GetRoleDto } from 'src/dto/role/role.dto';
 @UseGuards(JwtAuthGuard)
 @ApiTags('organization')
@@ -79,13 +80,14 @@ export class OrganizationController {
   })
   @Post()
   async create(@Body() createOrg: CreateOrganizationDto, @Request() req) {
-    const organization = await this.appService.getOrganization();
+    let organization: Organization;
+    if (createOrg.type == organizationType.supplier) {
+      organization = await this.appService.FindOrganization(createOrg.buyerId);
+    } else {
+      organization = await this.appService.getOrganization();
+    }
 
-    const orgnizationId = organization.id;
-
-    const currentUser = await this.appService.getCurrentUser();
-
-    const org = createOrg as Organization;
+    const org = (createOrg as unknown) as Organization;
 
     // check if an org exist in the db
     const existedOrg = await this.orgService.find({
@@ -115,7 +117,7 @@ export class OrganizationController {
     @Body() editOrg: EditOrganizationDto,
     @Param('organizationId') organizationId: string,
   ) {
-    let organization = await this.orgService.findOne({
+    const organization = await this.orgService.findOne({
       where: { id: organizationId },
     });
 
@@ -165,22 +167,18 @@ export class OrganizationController {
     @Body() createUserOrg: CreateOrganizationUserDto,
     @Request() req,
   ) {
-    let orgnizationId = req.headers['organization-id'];
-    if (orgnizationId) {
-      orgnizationId = orgnizationId.toString();
-
-      const organization = await this.orgService.findOne({
-        where: { id: orgnizationId },
-      });
-      if (!organization)
-        throw new BadRequestException(
-          AppResponse.badRequest('current organization  not found'),
-        );
+    let organization: Organization;
+    if (createUserOrg.organization.type == organizationType.supplier) {
+      organization = await this.appService.FindOrganization(
+        createUserOrg.organization.buyerId,
+      );
+    } else {
+      organization = await this.appService.getOrganization();
     }
 
     const currentUser = await this.appService.getCurrentUser();
 
-    const org = createUserOrg.organization as Organization;
+    const org = (createUserOrg.organization as unknown) as Organization;
 
     // check if an org exist in the db
     const existedOrg = await this.orgService.find({
@@ -231,21 +229,17 @@ export class OrganizationController {
       await this.userRole.save({ user: user, role: role } as UserRole);
     }
 
-    if (orgnizationId) {
-      // find created byUserId
-      orgnizationId = orgnizationId.toString();
-
-      const createByOrgan = await this.orgService.findOne({
-        where: { id: orgnizationId },
-      });
-      if (createByOrgan) {
-        const orgInvite = {
-          invitedByOrganization: createByOrgan,
-          inviteeOrganization: org,
-        } as OrganizationInvite;
-        this.orgInvite.save(orgInvite);
-      }
+    const createByOrgan = await this.orgService.findOne({
+      where: { id: organization.id },
+    });
+    if (createByOrgan) {
+      const orgInvite = {
+        invitedByOrganization: createByOrgan,
+        inviteeOrganization: org,
+      } as OrganizationInvite;
+      this.orgInvite.save(orgInvite);
     }
+
     // todo create invitation and sent email to this user
     const invitation = {
       invitedByUser: currentUser, // update to current loggedin user
@@ -406,9 +400,15 @@ export class OrganizationController {
   }
 
   @Get('suppliers')
-  async GetSupplier() {
+  async GetSupplier(@Query() filters: OrganizationFilter ) {
+    const where :FindConditions<Organization> = {
+      type: organizationType.supplier
+    };
+    if(filters.search){
+      where.name = Like(`%${filters.search}%`)
+    }
     const buyer = await this.orgService.find({
-      where: { type: organizationType.supplier },
+      where: where,
     });
 
     return AppResponse.OkSuccess(buyer);
@@ -522,6 +522,5 @@ export class OrganizationController {
     } as UserDto;
 
     return AppResponse.OkSuccess(user);
-  } 
-  
+  }
 }
