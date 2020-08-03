@@ -1,4 +1,4 @@
-import { supplier } from './../../../shared/oranization/organizationType';
+inimport { supplier } from './../../../shared/oranization/organizationType';
 import {
   PaginationQueryParam,
   PaginatedResultDto,
@@ -104,7 +104,7 @@ export class InvoiceController {
       // the fellowing existing code already exist
       throw new BadRequestException(
         AppResponse.badRequest(
-          'the fellowing invoice number already exist, in your invoice [] ' +
+          'the following invoice number already exist,invoice number/s ' +
             duplicateExistingCode,
         ),
       );
@@ -123,7 +123,7 @@ export class InvoiceController {
     if (notfoundCodes.length > 0) {
       throw new BadRequestException(
         AppResponse.badRequest(
-          'the fellowing organization code where not found [] ' + notfoundCodes,
+          'the following organization code was not found [] ' + notfoundCodes,
         ),
       );
     }
@@ -235,7 +235,7 @@ export class InvoiceController {
       // the fellowing existing code already exist
       throw new BadRequestException(
         AppResponse.badRequest(
-          'the fellowing invoice number already exist, in your invoice [] ' +
+          'the following invoice number already exist,invoice number/s ' +
             duplicateExistingCode,
         ),
       );
@@ -253,7 +253,7 @@ export class InvoiceController {
     if (notfoundCodes.length > 0) {
       throw new BadRequestException(
         AppResponse.badRequest(
-          'the fellowing organization code where not found [] ' + notfoundCodes,
+          'the following organization code was not found [] ' + notfoundCodes,
         ),
       );
     }
