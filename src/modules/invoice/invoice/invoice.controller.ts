@@ -341,13 +341,27 @@ export class InvoiceController {
       where.invoiceNumber = filter.invoiceNumber;
     }
     if (filter.supplierCode) {
-      const supplier = await this.orgRepo.findOne({
-        where: { code: filter.supplierCode },
-      });
-      if (supplier) {
-        where.createdForOrganization = supplier;
+      // const supplier = await this.orgRepo.findOne({
+      //   where: { code: filter.supplierCode },
+      // });
+      // if (supplier) {
+      //   where.createdForOrganization = supplier;
+      // }
+      where.createdForOrganization = { code: filter.supplierCode };
+    }
+
+    if (filter.fromDueDate && filter.toDueDate) {
+      const isAfter = moment(filter.fromDueDate).isAfter(filter.toDueDate);
+      if (isAfter) {
+        throw new BadRequestException(
+          AppResponse.badRequest(
+            'toDuedate value should exceed fromDueDate value',
+          ),
+          
+        );
       }
     }
+
     if (filter.fromDueDate) {
       if (moment(filter.fromDueDate).isValid()) {
         const date = moment(
@@ -378,6 +392,7 @@ export class InvoiceController {
       skip: skippedItems,
       take: param.limit,
       where: where,
+      order: { createdOn: 'DESC' },
     });
     const pageRes: PaginatedResultDto = {
       data: result[0],
