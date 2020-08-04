@@ -357,7 +357,6 @@ export class InvoiceController {
           AppResponse.badRequest(
             'toDuedate value should exceed fromDueDate value',
           ),
-          
         );
       }
     }
@@ -392,7 +391,7 @@ export class InvoiceController {
       skip: skippedItems,
       take: param.limit,
       where: where,
-      order: { createdOn: 'DESC' },
+      order: { dueDate: 'DESC' },
     });
     const pageRes: PaginatedResultDto = {
       data: result[0],
