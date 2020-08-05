@@ -305,6 +305,10 @@ export class OrganizationController {
     if (role) {
       await this.userRole.save({ user: user, role: role } as UserRole);
     }
+    await this.userOrgRepo.save({
+      user: user,
+      organization: org,
+    } as UserOrganization);
 
     const invitation = {
       invitedByUser: currentUser, // update to current loggedin user
