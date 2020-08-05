@@ -39,7 +39,8 @@ import {
   Get,
   UseGuards,
   Param,
-  Put, Query
+  Put,
+  Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger/dist/decorators/api-use-tags.decorator';
 import { Organization } from 'src/entities/organization.entity';
@@ -400,12 +401,12 @@ export class OrganizationController {
   }
 
   @Get('suppliers')
-  async GetSupplier(@Query() filters: OrganizationFilter ) {
-    const where :FindConditions<Organization> = {
-      type: organizationType.supplier
+  async GetSupplier(@Query() filters: OrganizationFilter) {
+    const where: FindConditions<Organization> = {
+      type: organizationType.supplier,
     };
-    if(filters.search){
-      where.name = Like(`%${filters.search}%`)
+    if (filters.search) {
+      where.name = Like(`%${filters.search}%`);
     }
     const buyer = await this.orgService.find({
       where: where,
@@ -439,29 +440,14 @@ export class OrganizationController {
     const suppliers = orgInvite.map(a => a.inviteeOrganization);
     return AppResponse.OkSuccess(suppliers);
   }
-  @Get(':organizationId')
-  async Get(@Param('organizationId') organizationId: string) {
-    const organization = await this.orgService.findOne({
-      where: { id: organizationId },
-    });
-
-    // check if orgaization exist
-    if (!organization) {
-      throw new BadRequestException(
-        AppResponse.badRequest('organization not found'),
-      );
-    }
-
-    return AppResponse.OkSuccess(organization);
-  }
 
   @ApiHeader({
     name: 'organizationId',
     description: 'provide organization id',
   })
-  @Get('users')
-  async GetOrgUsers() {
-    const org = await this.appService.getOrganization();
+  @Get(':organizationId/users')
+  async GetOrgUsers(@Param('organizationId') organizationId: string) {
+    const org = await this.appService.FindOrganization(organizationId);
 
     const userOrg = await this.userOrgRepo.find({
       where: { organization: org },
@@ -522,5 +508,21 @@ export class OrganizationController {
     } as UserDto;
 
     return AppResponse.OkSuccess(user);
+  }
+
+  @Get(':organizationId')
+  async Get(@Param('organizationId') organizationId: string) {
+    const organization = await this.orgService.findOne({
+      where: { id: organizationId },
+    });
+
+    // check if orgaization exist
+    if (!organization) {
+      throw new BadRequestException(
+        AppResponse.badRequest('organization not found'),
+      );
+    }
+
+    return AppResponse.OkSuccess(organization);
   }
 }
