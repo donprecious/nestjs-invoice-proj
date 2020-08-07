@@ -1,3 +1,4 @@
+import { OrganizationRole } from './../../entities/organizationRole.entity';
 import { Invitation } from './../../entities/Invitations.entity';
 import { OrganizationInvite } from './../../entities/organizationInvite.entity';
 
@@ -15,6 +16,12 @@ export class UserOrganizationRepository extends Repository<UserOrganization> {
   }
 }
 
+@EntityRepository(OrganizationRole)
+export class OrganizationRoleRepository extends Repository<OrganizationRole> {
+  constructor() {
+    super();
+  }
+}
 @EntityRepository(OrganizationInvite)
 export class OrganizationInviteRepository extends Repository<
   OrganizationInvite

@@ -12,6 +12,7 @@ export const ConfigConstant = {
     apiKey: 'EMAIL_SERVICE_APIKEY',
   },
   appId: 'APP_ID',
-  frontendUrl: 'FRONTEND_URL'
+  frontendUrl: 'FRONTEND_URL',
+  defaultAdminEmail: 'DEFAULT_ADMIN_EMAIL',
+  defaultPassword: 'DEFAULT_ADMIN_PASSWORD',
 };
-

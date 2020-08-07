@@ -10,7 +10,7 @@ export class UserDto extends EntityDto {
   @AutoMap() email: string;
 
   @AutoMap() phone: string;
-
+  status: string;
   // organization: organizationDto[];
   roles: GetRoleDto[];
 }

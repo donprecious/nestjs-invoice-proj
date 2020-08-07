@@ -341,13 +341,13 @@ export class InvoiceController {
       where.invoiceNumber = filter.invoiceNumber;
     }
     if (filter.supplierCode) {
-      // const supplier = await this.orgRepo.findOne({
-      //   where: { code: filter.supplierCode },
-      // });
-      // if (supplier) {
-      //   where.createdForOrganization = supplier;
-      // }
-      where.createdForOrganization = { code: filter.supplierCode };
+      const supplier = await this.orgRepo.findOne({
+        where: { code: filter.supplierCode },
+      });
+      if (supplier) {
+        where.createdForOrganization = supplier;
+      }
+      // where.createdForOrganization = { code: filter.supplierCode };
     }
 
     if (filter.fromDueDate && filter.toDueDate) {
