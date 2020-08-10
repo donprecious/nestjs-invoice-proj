@@ -1,16 +1,13 @@
 import { supplier } from './../../shared/oranization/organizationType';
 import { OrganizationRole } from './../../entities/organizationRole.entity';
-import { UserRole } from './../../entities/UserRole.entity';
+
 import { ConfigConstant } from 'src/shared/constants/ConfigConstant';
 import { ConfigService } from '@nestjs/config';
 import { UserRepository } from './../../services/user/userService';
 import { OrganizationRepository } from './../../services/organization/organizationService';
 import { Organization } from 'src/entities/organization.entity';
 import { Type } from 'class-transformer';
-import {
-  RoleRepository,
-  UserRoleRepository,
-} from './../../services/role/roleService';
+import { RoleRepository } from './../../services/role/roleService';
 
 import { Injectable } from '@nestjs/common';
 import { permissionTypes } from 'src/shared/app/permissionsType';
@@ -26,7 +23,7 @@ export class SeederService {
     private roleRepo: RoleRepository,
     private orgRepo: OrganizationRepository,
     private userRepo: UserRepository,
-    private userRoleRepo: UserRoleRepository,
+
     private configService: ConfigService,
   ) {}
 
@@ -34,7 +31,7 @@ export class SeederService {
     console.log('=========adding permissions==========');
 
     console.log('=========permissions==========');
-    
+
     const roles = [
       {
         Name: roleTypes.admin,
@@ -77,7 +74,7 @@ export class SeederService {
         ],
         type: roleTypes.supplierAdmin,
       },
-    ] as Role[]; 
+    ] as Role[];
 
     console.log('seeding role');
     for (const role of roles) {
@@ -120,11 +117,7 @@ export class SeederService {
     const adminRole = await this.roleRepo.findOne({
       where: { Name: roleTypes.admin },
     });
-    const userRole = {
-      role: adminRole,
-      user: user,
-    } as UserRole;
-    await this.userRoleRepo.save(userRole);
+
     // const otherRoles = await this.roleRepo.
     // var orgRole = [{
     //   organization : org,

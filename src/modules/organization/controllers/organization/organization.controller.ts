@@ -12,18 +12,13 @@ import { AppService } from './../../../../services/app/app.service';
 import { invitationStatus } from './../../../../shared/entity/entityStatus';
 import { Invitation } from './../../../../entities/Invitations.entity';
 import { OrganizationInvite } from './../../../../entities/organizationInvite.entity';
-import { UserRole } from 'src/entities/UserRole.entity';
+
 import { roleTypes } from './../../../../shared/app/roleTypes';
-import {
-  RoleRepository,
-  UserRoleRepository,
-} from './../../../../services/role/roleService';
-import { UserOrganization } from './../../../../entities/userOrganization.entity';
+import { RoleRepository } from './../../../../services/role/roleService';
 
 import { CreateOrganizationUserDto } from 'src/dto/user/create-organization-user.dto';
 import {
   OrganizationRepository,
-  UserOrganizationRepository,
   OrganizationInviteRepository,
   InvitationRepository,
 } from './../../../../services/organization/organizationService';
@@ -65,9 +60,9 @@ export class OrganizationController {
   constructor(
     private orgService: OrganizationRepository,
     private userRepo: UserRepository,
-    private userOrgRepo: UserOrganizationRepository,
+
     private roleRepo: RoleRepository,
-    private userRole: UserRoleRepository,
+
     private orgInvite: OrganizationInviteRepository,
     private invitationRepo: InvitationRepository,
     private appService: AppService,
@@ -192,7 +187,22 @@ export class OrganizationController {
         ),
       );
     }
+    let rolename = org.type;
+    if (rolename.toLowerCase() == roleTypes.supplier.toLowerCase()) {
+      rolename = roleTypes.supplierAdmin;
+    } else if (rolename.toLowerCase() == roleTypes.buyer.toLowerCase()) {
+      rolename = roleTypes.buyerAdmin;
+    }
+    const role = await this.roleRepo.findOne({ where: { Name: rolename } });
+    if (!role) {
+      throw new BadRequestException(
+        AppResponse.badRequest(
+          `organization type is not recognized and cannot be assigned a role, or the role ${rolename} does not exist`,
+        ),
+      );
+    }
     const user = (createUserOrg.user as unknown) as User;
+
     const userFound = await this.userRepo.findOne({
       where: { email: user.email },
     });
@@ -208,27 +218,11 @@ export class OrganizationController {
         HttpStatus.BAD_REQUEST,
       );
     }
-
     await this.orgService.insert(org);
+
+    user.organization = org;
+    user.role = role;
     await this.userRepo.insert(user);
-    const userOrg = {
-      user: user,
-      organization: org,
-    } as UserOrganization;
-
-    await this.userOrgRepo.insert(userOrg);
-
-    let rolename = userOrg.organization.type;
-    if (rolename.toLowerCase() == roleTypes.supplier.toLowerCase()) {
-      rolename = roleTypes.supplierAdmin;
-    } else if (rolename.toLowerCase() == roleTypes.buyer.toLowerCase()) {
-      rolename = roleTypes.buyerAdmin;
-    }
-    const role = await this.roleRepo.findOne({ where: { Name: rolename } });
-    if (role) {
-      // user.roles = [role];
-      await this.userRole.save({ user: user, role: role } as UserRole);
-    }
 
     const createByOrgan = await this.orgService.findOne({
       where: { id: organization.id },
@@ -300,15 +294,9 @@ export class OrganizationController {
     if (!role) {
       throw new BadRequestException(AppResponse.badRequest('role not found'));
     }
+    user.role = role;
+    user.organization = org;
     await this.userRepo.insert(user);
-
-    if (role) {
-      await this.userRole.save({ user: user, role: role } as UserRole);
-    }
-    await this.userOrgRepo.save({
-      user: user,
-      organization: org,
-    } as UserOrganization);
 
     const invitation = {
       invitedByUser: currentUser, // update to current loggedin user
@@ -347,6 +335,7 @@ export class OrganizationController {
 
     const user = await this.userRepo.findOne({
       where: { id: userId },
+      relations: ['role'],
     });
     if (!user) {
       throw new NotFoundException(AppResponse.NotFound('user not found'));
@@ -364,28 +353,11 @@ export class OrganizationController {
         throw new BadRequestException(AppResponse.badRequest('role not found'));
       }
       // check if user is in that role
-      const userRolesResult = await this.userRole.find({
-        where: {
-          user: user,
-        },
-        relations: ['role'],
-      });
-      const roles = userRolesResult.map(a => a.role);
-      const findRoles = roles.find(a => a.Name == rolename);
-      if (!findRoles) {
-        const addRole = { user: user, role: role } as UserRole;
-        await this.userRole.save(addRole);
-        const roleToDelete = userRolesResult.filter(
-          a => a.role.Name != rolename,
-        );
-        if (roleToDelete) {
-          await this.userRole.remove(roleToDelete);
-        }
-      }
+      user.role = role;
     }
     await this.userRepo.update(user.id, user);
 
-    return AppResponse.OkSuccess({}, 'user updated');
+    return AppResponse.OkSuccess(user, 'user updated');
   }
 
   // get all suppliers invitted by a buyer
@@ -453,32 +425,12 @@ export class OrganizationController {
   async GetOrgUsers(@Param('organizationId') organizationId: string) {
     const org = await this.appService.FindOrganization(organizationId);
 
-    const userOrg = await this.userOrgRepo.find({
-      where: { organization: org },
-      relations: ['user', 'user.userRoles', 'user.userRoles.role'],
-    });
+    // const userOrg = await this.userOrgRepo.find({
+    //   where: { organization: org },
+    //   relations: ['user', 'user.userRoles', 'user.userRoles.role'],
+    // });
 
-    const users = userOrg.map(a => {
-      const userRole = a.user.userRoles.map(r => {
-        const role = {
-          Name: r.role.Name,
-          Description: r.role.Description,
-          Permissions: r.role.permission,
-        } as GetRoleDto;
-        return role;
-      });
-
-      const user = {
-        email: a.user.email,
-        id: a.user.id,
-        firstName: a.user.firstName,
-        lastName: a.user.lastName,
-        phone: a.user.phone,
-        createdOn: a.user.createdOn,
-        roles: userRole,
-      } as UserDto;
-      return user;
-    });
+    const users = await this.userRepo.find({ where: { organization: org } });
     return AppResponse.OkSuccess(users);
   }
 
@@ -486,21 +438,18 @@ export class OrganizationController {
   async GetOrgUser(@Param('userId') userId: string) {
     const result = await this.userRepo.findOne({
       where: { id: userId },
-      relations: ['userRoles', 'userRoles.role'],
+      relations: ['role'],
     });
 
     if (!result) {
       throw new NotFoundException(AppResponse.NotFound());
     }
-
-    const userRole = result.userRoles.map(r => {
-      const role = {
-        Name: r.role.Name,
-        Description: r.role.Description,
-        Permissions: r.role.permission,
-      } as GetRoleDto;
-      return role;
-    });
+    const role = {
+      Permissions: result.role.permission,
+      description: result.role.Description,
+      name: result.role.Name,
+      type: result.role.type,
+    } as GetRoleDto;
     const user = {
       email: result.email,
       id: result.id,
@@ -508,7 +457,7 @@ export class OrganizationController {
       lastName: result.lastName,
       phone: result.phone,
       createdOn: result.createdOn,
-      roles: userRole,
+      role: role,
     } as UserDto;
 
     return AppResponse.OkSuccess(user);
@@ -529,4 +478,5 @@ export class OrganizationController {
 
     return AppResponse.OkSuccess(organization);
   }
+  
 }

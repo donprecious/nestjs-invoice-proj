@@ -7,13 +7,13 @@ import { Entity, Column, ManyToOne } from 'typeorm';
 export class OrganizationInvite extends BaseEntity {
   @ManyToOne(
     type => Organization,
-    organization => organization.userOrganization,
+    // organization => organization.userOrganization,
   )
   invitedByOrganization: Organization;
-    
+
   @ManyToOne(
     type => Organization,
-    organization => organization.userOrganization,
+    // organization => organization.userOrganization,
   )
   inviteeOrganization: Organization;
 }

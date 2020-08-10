@@ -11,4 +11,6 @@ import { InvitationController } from './controllers/invitation/invitation.contro
   controllers: [OrganizationController, InvitationController],
   imports: [SharedModule],
 })
-export class OrganizationModule {}
+export class OrganizationModule { 
+  
+}

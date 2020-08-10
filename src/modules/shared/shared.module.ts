@@ -1,14 +1,11 @@
 import { InvoiceRepository } from './../../services/invoice/invoice';
 import { ConfigModule } from '@nestjs/config/dist/config.module';
 import { EmailService } from './../../services/notification/email/email.service';
+import { RoleRepository } from './../../services/role/roleService';
 import {
-  RoleRepository,
-  UserRoleRepository,
-} from './../../services/role/roleService';
-import {
-  UserOrganizationRepository,
   OrganizationInviteRepository,
-  InvitationRepository,, OrganizationRoleRepository
+  InvitationRepository,
+  OrganizationRoleRepository,
 } from './../../services/organization/organizationService';
 
 import { HttpModule, Module } from '@nestjs/common';
@@ -25,9 +22,9 @@ import { AppService } from 'src/services/app/app.service';
     TypeOrmModule.forFeature([
       OrganizationRepository,
       UserRepository,
-      UserOrganizationRepository,
+
       RoleRepository,
-      UserRoleRepository,
+
       OrganizationInviteRepository,
       InvitationRepository,
       InvoiceRepository,

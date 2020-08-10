@@ -133,7 +133,7 @@ export class InvitationController {
       );
     }
 
-    let updateUser = invite.user;
+    const updateUser = invite.user;
     const otp = GenerateRandom(10315, 99929);
     updateUser.otp = otp;
     const expiretime = moment().add(10, 'minutes');

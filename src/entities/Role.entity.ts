@@ -1,5 +1,5 @@
 import { OrganizationRole } from './organizationRole.entity';
-import { UserRole } from './UserRole.entity';
+// import { UserRole } from './UserRole.entity';
 import { BaseEntity } from '../shared/entity/baseEntity';
 import {
   Entity,
@@ -23,19 +23,19 @@ export class Role extends BaseEntity {
   @Column({ nullable: true })
   type: string;
 
-  @OneToMany(
-    type => UserRole,
-    userRole => userRole.role,
-  )
-  userRoles: UserRole[];
+  // @OneToMany(
+  //   type => UserRole,
+  //   userRole => userRole.role,
+  // )
+  // userRoles: UserRole[];
 
   @Column({ type: 'simple-array' })
   permission: string[];
 
   @OneToMany(
     type => OrganizationRole,
-    organizationRole => organizationRole.role, 
-    {onDelete: "CASCADE"}
+    organizationRole => organizationRole.role,
+    { onDelete: 'CASCADE' },
   )
   organizationRoles: OrganizationRole[];
 }
