@@ -28,6 +28,47 @@ export class SeederService {
   ) {}
 
   async seed() {
+    await this.seedDefaultRoleAndPermission();
+    await this.seedOrganization();
+  }
+
+  async seedOrganization() {
+    const email = this.configService.get(ConfigConstant.defaultAdminEmail);
+    const password = this.configService.get(ConfigConstant.defaultPassword);
+    const passwordHash = await hash(password, 10);
+    const findOrg = await this.orgRepo.findOne({ where: { email: email } });
+    // todo create default organization
+    if (findOrg) return;
+
+    const org = {
+      name: 'Front Edge',
+      address: {},
+      email: email,
+      phone: '',
+      code: 'FrontEdge 123444',
+      type: roleTypes.admin,
+      taxId: '11111',
+    } as Organization;
+    await this.orgRepo.save(org);
+    const user = {
+      email: 'admin@frontedge.com',
+      firstName: 'system_admin',
+      lastName: 'system_admin',
+      phone: '',
+      passwordHash: passwordHash,
+    } as User;
+    user.organization = org;
+
+    const adminRole = await this.roleRepo.findOne({
+      where: { Name: roleTypes.admin },
+    });
+
+    user.role = adminRole;
+    await this.userRepo.save(user);
+    console.log('completed seeding default organization ');
+  }
+
+  async seedDefaultRoleAndPermission() {
     console.log('=========adding permissions==========');
 
     console.log('=========permissions==========');
@@ -86,44 +127,5 @@ export class SeederService {
       }
     }
     console.log('seeding role complete');
-  }
-
-  async seedOrganization() {
-    const email = this.configService.get(ConfigConstant.defaultAdminEmail);
-    const password = this.configService.get(ConfigConstant.defaultPassword);
-    const passwordHash = await hash(password, 10);
-    // todo create default organization
-    const org = {
-      name: 'Front Edge',
-      address: {},
-      email: email,
-      phone: '',
-      code: 'FrontEdge 123444',
-      type: roleTypes.admin,
-    } as Organization;
-    await this.orgRepo.save(org);
-    const user = {
-      email: 'admin@frontedge.com',
-      firstName: 'system_admin',
-      lastName: 'system_admin',
-      phone: '',
-      passwordHash: passwordHash,
-    } as User;
-    await this.userRepo.save(user);
-
-    //todo create a default admin user
-
-    // todo add user to default roles
-    const adminRole = await this.roleRepo.findOne({
-      where: { Name: roleTypes.admin },
-    });
-
-    // const otherRoles = await this.roleRepo.
-    // var orgRole = [{
-    //   organization : org,
-    //   role: adminRole,
-    // }] as OrganizationRole[];
-    // await this.orgRepo.
-    // todo add organization to default role
   }
 }

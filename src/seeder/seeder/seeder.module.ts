@@ -1,4 +1,3 @@
-
 import { SharedModule } from './../../modules/shared/shared.module';
 import { Module, OnModuleInit } from '@nestjs/common';
 import { SeederService } from './seeder.service';

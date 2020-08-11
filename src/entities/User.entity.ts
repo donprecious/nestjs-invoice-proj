@@ -2,14 +2,7 @@ import { Role } from './Role.entity';
 // import { UserRole } from './UserRole.entity';
 // import { UserOrganization } from './userOrganization.entity';
 import { BaseEntity } from './../shared/entity/baseEntity';
-import {
-  Entity,
-  Column,
-  OneToMany,
-  Timestamp,
-  JoinColumn,
-  OneToOne,
-} from 'typeorm';
+import { Entity, Column, Timestamp, ManyToOne } from 'typeorm';
 
 import { AutoMap } from 'nestjsx-automapper';
 import { Organization } from './organization.entity';
@@ -62,11 +55,17 @@ export class User extends BaseEntity {
   //   userRole => userRole.user,
   // )
   // userRoles: UserRole[];
-  @OneToOne(type => Organization, { cascade: true })
-  @JoinColumn()
+  @ManyToOne(
+    type => Organization,
+    organization => organization.users,
+    { cascade: true },
+  )
   organization: Organization;
 
-  @OneToOne(type => Role, { cascade: true })
-  @JoinColumn()
+  @ManyToOne(
+    type => Role,
+    role => role.users,
+    { cascade: true },
+  )
   role: Role;
 }

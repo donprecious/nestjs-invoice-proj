@@ -1,4 +1,3 @@
-
 import { Organization } from 'src/entities/organization.entity';
 import { SharedModule } from './../shared/shared.module';
 import { Module } from '@nestjs/common';
@@ -11,6 +10,4 @@ import { InvitationController } from './controllers/invitation/invitation.contro
   controllers: [OrganizationController, InvitationController],
   imports: [SharedModule],
 })
-export class OrganizationModule { 
-  
-}
+export class OrganizationModule {}

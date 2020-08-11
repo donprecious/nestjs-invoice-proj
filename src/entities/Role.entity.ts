@@ -23,12 +23,6 @@ export class Role extends BaseEntity {
   @Column({ nullable: true })
   type: string;
 
-  // @OneToMany(
-  //   type => UserRole,
-  //   userRole => userRole.role,
-  // )
-  // userRoles: UserRole[];
-
   @Column({ type: 'simple-array' })
   permission: string[];
 
@@ -38,4 +32,10 @@ export class Role extends BaseEntity {
     { onDelete: 'CASCADE' },
   )
   organizationRoles: OrganizationRole[];
+
+  @OneToMany(
+    type => User,
+    user => user.role,
+  )
+  users: User[];
 }

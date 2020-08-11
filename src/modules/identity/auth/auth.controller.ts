@@ -83,24 +83,24 @@ export class AuthController {
   }
 
   @Post('login') async Login(@Body() loginDto: LoginDto) {
-      const findUser = await this.userRepo.findOne({
-        where: { email: loginDto.email },
-        relations: ['organization', 'role'],
-      });
-      if (!findUser) {
-        throw new BadRequestException(
-          AppResponse.badRequest('invalid login details'),
-        );
-      }
-      const orgs = findUser.organization as  OrganizationPayloadDto; 
-      const role = findUser.role as unknown as GetRoleDto; 
+    const findUser = await this.userRepo.findOne({
+      where: { email: loginDto.email },
+      relations: ['organization', 'role'],
+    });
+    if (!findUser) {
+      throw new BadRequestException(
+        AppResponse.badRequest('invalid login details'),
+      );
+    }
+    const orgs = findUser.organization as OrganizationPayloadDto;
+    const role = (findUser.role as unknown) as GetRoleDto;
 
-      const isCorrect = await compare(loginDto.password, findUser.passwordHash);
-      if (!isCorrect) {
-        throw new BadRequestException(
-          AppResponse.badRequest('invalid login details'),
-        );
-      }
+    const isCorrect = await compare(loginDto.password, findUser.passwordHash);
+    if (!isCorrect) {
+      throw new BadRequestException(
+        AppResponse.badRequest('invalid login details'),
+      );
+    }
 
     const payload = {
       sub: findUser.id,
@@ -109,7 +109,7 @@ export class AuthController {
       lastname: findUser.lastName,
       userId: findUser.id,
       organization: orgs,
-      role: role
+      role: role,
     } as JwtPayloadDto;
     // generate token here
     const token = this.jwtService.sign(payload);
@@ -136,11 +136,12 @@ export class AuthController {
     //todo send email
     const forgetPasswordUrl =
       this.configService.get(ConfigConstant.frontendUrl) +
-      `forgotpasword/?email=${findUser.email}&token=${token}`;
-    const message = `Hello, you have initiated a password reset , if you didnt ignore 
-      otherwise 
-      <br> click the click below <a href='${forgetPasswordUrl}'>reset password</a>
-    `;
+      'forgotpasword/?email=' +
+      findUser.email +
+      '+&token=' +
+      token;
+    const message = `Hello, you have initiated a password reset , 
+    if you didnt ignore  otherwise  <br> click this link to <a href=${forgetPasswordUrl}>reset password</a>`;
     const emailMessage: EmailDto = {
       to: [findUser.email],
       body: message,

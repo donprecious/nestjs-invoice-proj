@@ -7,6 +7,7 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { AutoMap } from 'nestjsx-automapper';
 import { Type } from 'class-transformer';
 import { organizationStatus } from 'src/shared/app/organizationStatus';
+import { User } from './User.entity';
 
 @Entity()
 export class Organization extends BaseEntity {
@@ -29,11 +30,15 @@ export class Organization extends BaseEntity {
   @AutoMap()
   phone: string;
 
-  @Column()
+  @Column({ nullable: true })
   @AutoMap()
   bankcode: string;
 
-  @Column()
+  @Column({ nullable: true })
+  @AutoMap()
+  bankName: string;
+
+  @Column({ nullable: true })
   @AutoMap()
   bankNumber: string;
 
@@ -60,4 +65,10 @@ export class Organization extends BaseEntity {
     { onDelete: 'CASCADE' },
   )
   organizationRoles: OrganizationRole[];
+
+  @OneToMany(
+    type => User,
+    user => user.organization,
+  )
+  users: User[];
 }
