@@ -136,6 +136,7 @@ export class InvoiceController {
         invoiceNumber: row.invoiceNumber,
         currencyCode: row.currencyCode,
         dueDate: row.dueDate,
+        discountAmount: 0.95*row.amount,
         createdByOrganization: organization,
         createdForOrganization: uniqueOrganizations.find(
           a => a.code == row.supplierCode,
@@ -251,6 +252,7 @@ export class InvoiceController {
     for (const row of result.rows) {
       const invoice = {
         amount: row.amount,
+        discountAmount: 0.95*row.amount,
         invoiceNumber: row.invoiceNo,
         currencyCode: row.currencyCode,
         dueDate: row.dueDate,
