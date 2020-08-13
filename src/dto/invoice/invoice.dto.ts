@@ -12,6 +12,8 @@ export class InvoiceDto extends EntityDto {
   @IsNumber()
   amount: number;
 
+  discountAmount: number;
+
   @IsDate()
   dueDate: Date;
 

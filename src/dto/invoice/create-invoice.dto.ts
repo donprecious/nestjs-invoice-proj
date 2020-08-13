@@ -19,7 +19,7 @@ export class CreateInvoiceDto {
   amount: number;
 
   @IsDateString()
-  dueDate: Date;
+  dueDate: Date; 
 }
 
 export class CreateSingleInvoiceDto {
@@ -36,7 +36,9 @@ export class CreateSingleInvoiceDto {
   dueDate: Date;
 
   @IsNotEmpty()
-  supplierCode: string;
+  supplierCode: string; 
+
+
 }
 
 export class CreateManyInvoiceDto {

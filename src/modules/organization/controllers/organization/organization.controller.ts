@@ -1,3 +1,4 @@
+import { RolePermissionGuard } from './../../../../shared/guards/role-permission.guard';
 import { OrganizationFilter } from './../../../../dto/organization/organization.dto';
 import { organizationType } from './../../../../shared/app/organizationType';
 import { UserDto } from './../../../../dto/user/user.dto';
@@ -54,6 +55,7 @@ import { String } from 'lodash';
 import { PromiseUtils, FindConditions, Like } from 'typeorm';
 import { GetRoleDto } from 'src/dto/role/role.dto';
 @UseGuards(JwtAuthGuard)
+// @UseGuards(RolePermissionGuard)
 @ApiTags('organization')
 @Controller('organization')
 export class OrganizationController {
@@ -247,9 +249,10 @@ export class OrganizationController {
     // todo send email to this user with invitation link]
     const inviteUrl =
       this.configService.get(ConfigConstant.frontendUrl) +
-      `join/?inviteId=${invitation.id}`;
+      'join/?inviteId=' +
+      invitation.id;
     const message = `Hello You have been invited to Verify and Activate your account 
-      <br> click the click below <a href='${inviteUrl}'>Activate account</a>
+      <br> click the click below <a href=${inviteUrl}>Activate account</a>
     `;
     const emailMessage: EmailDto = {
       to: [org.email, user.email],
@@ -478,5 +481,4 @@ export class OrganizationController {
 
     return AppResponse.OkSuccess(organization);
   }
-  
 }
