@@ -1,3 +1,4 @@
+import { Role } from './../../../entities/Role.entity';
 import { AppService } from 'src/services/app/app.service';
 import { GetRoleDto } from './../../../dto/role/role.dto';
 import {
@@ -11,7 +12,7 @@ import { ConfigService } from '@nestjs/config';
 import { EmailService } from './../../../services/notification/email/email.service';
 import { ResetPasswordDto } from './../../../dto/auth/reset-password.dto';
 import { IsEmail } from 'class-validator';
-import { UserOrganizationRepository } from './../../../services/organization/organizationService';
+
 import { LoginDto } from './../../../dto/auth/login.dto';
 import { UserRepository } from './../../../services/user/userService';
 import { ApiTags } from '@nestjs/swagger/dist/decorators';
@@ -43,7 +44,7 @@ export class AuthController {
   constructor(
     private userRepo: UserRepository,
     private jwtService: JwtService,
-    private userOrg: UserOrganizationRepository,
+
     private emailSerice: EmailService,
     private configService: ConfigService,
     private appService: AppService,
@@ -84,37 +85,15 @@ export class AuthController {
   @Post('login') async Login(@Body() loginDto: LoginDto) {
     const findUser = await this.userRepo.findOne({
       where: { email: loginDto.email },
-      relations: [
-        'userOrganization',
-        'userRoles',
-        'userOrganization.organization',
-        'userRoles.role',
-      ],
+      relations: ['organization', 'role'],
     });
     if (!findUser) {
       throw new BadRequestException(
         AppResponse.badRequest('invalid login details'),
       );
     }
-    const orgs = findUser.userOrganization.map(a => {
-      return {
-        id: a.organization.id,
-        name: a.organization.name,
-        code: a.organization.code,
-        email: a.organization.email,
-        address: a.organization.address,
-        phone: a.organization.phone,
-        taxId: a.organization.taxId,
-        type: a.organization.type,
-      } as OrganizationPayloadDto;
-    });
-    const roles = findUser.userRoles.map(a => {
-      const rol = {
-        Name: a.role.Name,
-        Permissions: a.role.permission,
-      } as GetRoleDto;
-      return rol;
-    });
+    const orgs = findUser.organization as OrganizationPayloadDto;
+    const role = (findUser.role as unknown) as GetRoleDto;
 
     const isCorrect = await compare(loginDto.password, findUser.passwordHash);
     if (!isCorrect) {
@@ -125,13 +104,12 @@ export class AuthController {
 
     const payload = {
       sub: findUser.id,
-      userId: findUser.id,
+      email: findUser.email,
       firstname: findUser.firstName,
       lastname: findUser.lastName,
-      email: findUser.email,
-      organization: orgs.length > 0 ? orgs[0] : null,
-
-      role: roles,
+      userId: findUser.id,
+      organization: orgs,
+      role: role,
     } as JwtPayloadDto;
     // generate token here
     const token = this.jwtService.sign(payload);
@@ -158,11 +136,12 @@ export class AuthController {
     //todo send email
     const forgetPasswordUrl =
       this.configService.get(ConfigConstant.frontendUrl) +
-      `forgotpasword/?email=${findUser.email}&token=${token}`;
-    const message = `Hello, you have initiated a password reset , if you didnt ignore 
-      otherwise 
-      <br> click the click below <a href='${forgetPasswordUrl}'>reset password</a>
-    `;
+      'forgotpasword/?email=' +
+      findUser.email +
+      '+&token=' +
+      token;
+    const message = `Hello, you have initiated a password reset , 
+    if you didnt ignore  otherwise  <br> click this link to <a href=${forgetPasswordUrl}>reset password</a>`;
     const emailMessage: EmailDto = {
       to: [findUser.email],
       body: message,

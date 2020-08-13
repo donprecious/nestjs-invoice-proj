@@ -1,10 +1,10 @@
 {
   "type": "mysql",
-   "host": "frontedge-staging.ctlephtditsn.eu-west-1.rds.amazonaws.com",
+  "host": "frontedge-staging.ctlephtditsn.eu-west-1.rds.amazonaws.com",
   "port": 3306,
   "username": "frontedgestaging",
   "password": "frontedge-staging",
-  "database": "scf_staging",
+  "database": "scf",
   "synchronize": false,
   "logging": true,
   "entities": ["src/entities/**/*.ts"],

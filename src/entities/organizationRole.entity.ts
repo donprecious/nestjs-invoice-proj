@@ -1,19 +1,20 @@
+import { Role } from './Role.entity';
 import { Organization } from './organization.entity';
 import { User } from './User.entity';
 import { BaseEntity } from '../shared/entity/baseEntity';
 import { Entity, Column, ManyToOne } from 'typeorm';
 
 @Entity()
-export class UserOrganization extends BaseEntity {
+export class OrganizationRole extends BaseEntity {
   @ManyToOne(
-    type => User,
-    user => user.userOrganization,
+    type => Role,
+    role => role.organizationRoles,
   )
-  user: User;
+  role: Role;
 
   @ManyToOne(
     type => Organization,
-    organization => organization.userOrganization,
+    organization => organization.organizationRoles,
   )
   organization: Organization;
 }

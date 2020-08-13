@@ -16,6 +16,9 @@ export class Invoice extends BaseEntity {
   @Column({ type: 'timestamp' })
   dueDate: Date;
 
+  @Column({ type: 'decimal', nullable: true })
+  discountAmount: number;
+
   @ManyToOne(type => Organization)
   createdForOrganization: Organization;
 

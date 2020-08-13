@@ -4,3 +4,34 @@ export const permissionTypes = {
   update: 'update',
   delete: 'delete',
 };
+
+export enum BuyerPermissions {
+  createBuyer = 'Create_Buyer',
+  editBuyer = 'Edit_Buyer',
+  listBuyer = 'List_Buyer',
+  deleteBuyer = 'Delete_Buyer',
+  viewSuppliers = 'View_Own_Supplier',
+  addBuyerUser = 'Add_Buyer_User',
+  BuyerAdminAccess = 'Buyer_AdminAccess',
+}
+
+export enum SupplierPermissions {
+  createSuppier = 'Create_Suppier',
+  editSuppier = 'Edit_Suppier',
+  listSuppier = 'List_Suppier',
+  deleteSuppier = 'Delete_Suppier',
+  viewBuyers = 'View_Own_Buyer',
+  addSupplierUser = 'Add_Suppier_User',
+  SuppierAdminAccess = 'Suppier_AdminAcess',
+}
+
+export enum InvoicePermissions {
+  create = 'Create_Invoice',
+  edit = 'Edit_Invoice',
+  delete = 'Delete_Invoice',
+  list = 'List_Invoice',
+}
+
+export enum AdminPermissions {
+  any = 'Any',
+}

@@ -1,5 +1,6 @@
 export class GetRoleDto {
-  Name: string;
-  Description: string;
+  name: string;
+  description: string;
+  type: string;
   Permissions: string[];
 }

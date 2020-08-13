@@ -148,31 +148,20 @@ export class InvoiceController {
     return AppResponse.OkSuccess(createInvoices);
   }
 
-  @ApiHeader({
-    name: 'organizationId',
-    description: 'provide organization id',
-  })
-  @Post('upload')
+  @Post('upload/:organizationId')
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(AnyFilesInterceptor())
   async uploadFile(
     @UploadedFiles() files,
     @Request() req,
-    // @Param('supplierId') supplierId: string,
+    @Param('organizationId') organizationId: string,
   ) {
     if (!files || files.length <= 0) {
       throw new BadRequestException(AppResponse.badRequest('no files found'));
     }
-    let orgnizationId = req.headers['organization-id'];
-    if (!orgnizationId) {
-      throw new BadRequestException(
-        AppResponse.badRequest('organization-id not present in header'),
-      );
-    }
-    orgnizationId = orgnizationId.toString();
 
     const organization = await this.orgRepo.findOne({
-      where: { id: orgnizationId },
+      where: { id: organizationId },
     });
     if (!organization)
       throw new BadRequestException(
@@ -341,13 +330,13 @@ export class InvoiceController {
       where.invoiceNumber = filter.invoiceNumber;
     }
     if (filter.supplierCode) {
-      // const supplier = await this.orgRepo.findOne({
-      //   where: { code: filter.supplierCode },
-      // });
-      // if (supplier) {
-      //   where.createdForOrganization = supplier;
-      // }
-      where.createdForOrganization = { code: filter.supplierCode };
+      const supplier = await this.orgRepo.findOne({
+        where: { code: filter.supplierCode },
+      });
+      if (supplier) {
+        where.createdForOrganization = supplier;
+      }
+      // where.createdForOrganization = { code: filter.supplierCode };
     }
 
     if (filter.fromDueDate && filter.toDueDate) {

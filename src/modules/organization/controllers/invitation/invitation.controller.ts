@@ -133,7 +133,7 @@ export class InvitationController {
       );
     }
 
-    let updateUser = invite.user;
+    const updateUser = invite.user;
     const otp = GenerateRandom(10315, 99929);
     updateUser.otp = otp;
     const expiretime = moment().add(10, 'minutes');
@@ -144,16 +144,18 @@ export class InvitationController {
 
     invite.status = updateStatus.status;
     await this.invitationRepo.update(invite.id, invite);
-
-    const message = `Invitation Accepted! , Activate your account with this Otp : <b>${otp}</b>
-    `;
-    const emailMessage: EmailDto = {
-      to: [updateUser.email],
-      body: message,
-      subject: 'Activate your Account',
-    };
-    this.emailSerice.sendEmail(emailMessage).subscribe(d => console.log(d));
-    return AppResponse.OkSuccess({}, 'invitation accepted and confirmed');
+    if (updateStatus.status == invitationStatus.accepted) {
+      const message = `Invitation Accepted! , Activate your account with this Otp : <b>${otp}</b>
+      `;
+      const emailMessage: EmailDto = {
+        to: [updateUser.email],
+        body: message,
+        subject: 'Activate your Account',
+      };
+      this.emailSerice.sendEmail(emailMessage).subscribe(d => console.log(d));
+      return AppResponse.OkSuccess({}, 'invitation accepted and confirmed');
+    }
+    return AppResponse.OkSuccess({}, 'invitation ' + updateStatus.status);
     // }
   }
   @Get(':invitationId/resend-otp')
@@ -188,7 +190,7 @@ export class InvitationController {
     };
     this.emailSerice.sendEmail(emailMessage).subscribe(d => console.log(d));
     return AppResponse.OkSuccess(null, 'otp sent');
-    }
+  }
   // @Put(':invitationId/organization/confirm')
   // async confirmOrganizationAndUser(
   //   @Param('invitationId', new ParseUUIDPipe()) invitationId: string,
