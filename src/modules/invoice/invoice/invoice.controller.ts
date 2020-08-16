@@ -1,3 +1,4 @@
+import { InvoicePermissions } from './../../../shared/app/permissionsType';
 import { supplier } from './../../../shared/oranization/organizationType';
 import {
   PaginationQueryParam,
@@ -51,7 +52,10 @@ import { EmailService } from 'src/services/notification/email/email.service';
 import { ConfigService } from '@nestjs/config';
 import moment = require('moment');
 
-@UseGuards(JwtAuthGuard)
+import { AllowPermissions } from 'src/shared/guards/permission.decorator';
+import { RolePermissionGuard } from 'src/shared/guards/role-permission.guard';
+
+@UseGuards(JwtAuthGuard, RolePermissionGuard)
 @ApiTags('invoice')
 @Controller('invoice')
 export class InvoiceController {
@@ -66,6 +70,7 @@ export class InvoiceController {
     description: 'provide organization id',
   })
   @Post()
+  @AllowPermissions(InvoicePermissions.create)
   async create(@Body() createInvoices: CreateManyInvoiceDto, @Request() req) {
     const organization = await this.appService.getOrganization();
 
@@ -115,7 +120,7 @@ export class InvoiceController {
     );
 
     const uniqueOrganizations = await this.orgRepo.find({
-      where: { code: In(uniqueCodes) , parentId: organization.id },
+      where: { code: In(uniqueCodes), parentId: organization.id },
     });
     const uniqueOrgCodes = uniqueOrganizations.map(a => a.code);
     const notfoundCodes = _.difference(uniqueCodes, uniqueOrgCodes);
@@ -149,6 +154,7 @@ export class InvoiceController {
     return AppResponse.OkSuccess(createInvoices);
   }
 
+  @AllowPermissions(InvoicePermissions.create)
   @Post('upload/:organizationId')
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(AnyFilesInterceptor())
@@ -235,7 +241,7 @@ export class InvoiceController {
     const uniqueCodes = _.uniq(result.rows.map(a => a.supplierCode));
 
     const uniqueOrganizations = await this.orgRepo.find({
-      where: { code: In(uniqueCodes) , parentId: organization.id},
+      where: { code: In(uniqueCodes), parentId: organization.id },
     });
     const uniqueOrgCodes = uniqueOrganizations.map(a => a.code);
     const notfoundCodes = _.difference(uniqueCodes, uniqueOrgCodes);
@@ -268,6 +274,7 @@ export class InvoiceController {
     return AppResponse.OkSuccess(invoices);
   }
 
+  @AllowPermissions(InvoicePermissions.view, InvoicePermissions.list)
   @ApiHeader({
     name: 'organizationId',
     description: 'provide organization id',
@@ -297,6 +304,8 @@ export class InvoiceController {
 
     return AppResponse.OkSuccess(pageRes);
   }
+
+  @AllowPermissions(InvoicePermissions.view, InvoicePermissions.list)
   @Get('buyer')
   async GetInvoiceForBuyer(@Query() param: PaginationQueryParam) {
     const organization = await this.appService.getOrganization();
@@ -317,6 +326,7 @@ export class InvoiceController {
     return AppResponse.OkSuccess(pageRes);
   }
 
+  @AllowPermissions(InvoicePermissions.list)
   @Get()
   async GetAllInvoice(
     @Query() param: PaginationQueryParam,
@@ -393,6 +403,7 @@ export class InvoiceController {
     return AppResponse.OkSuccess(pageRes);
   }
 
+  @AllowPermissions(InvoicePermissions.view)
   @Get(':invoiceId')
   async GetInvoice(@Param('invoiceId') invoiceId: string) {
     const invoice = await this.invoiceRepo.findOne({

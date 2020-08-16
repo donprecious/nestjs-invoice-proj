@@ -1,4 +1,12 @@
-import { AdminPermissions, BuyerPermissions, DefaultBuyerPermissions, DefaultSupplierPermissions, SupplierPermissions } from './../../shared/app/permissionsType';
+import {
+  BuyerPermissions,
+  DefaultBuyerPermissions,
+  DefaultSupplierPermissions,
+  SupplierPermissions,
+  DefaultSupplierAdminPermissions,
+  DefaultBuyerAdminPermissions,
+  DefaultAdminPermission,
+} from './../../shared/app/permissionsType';
 import { supplier } from './../../shared/oranization/organizationType';
 import { OrganizationRole } from './../../entities/organizationRole.entity';
 
@@ -11,7 +19,6 @@ import { Type } from 'class-transformer';
 import { RoleRepository } from './../../services/role/roleService';
 
 import { Injectable } from '@nestjs/common';
-import { permissionTypes } from 'src/shared/app/permissionsType';
 
 import { roleTypes } from 'src/shared/app/roleTypes';
 import { Role } from 'src/entities/Role.entity';
@@ -31,6 +38,15 @@ export class SeederService {
   async seed() {
     await this.seedDefaultRoleAndPermission();
     await this.seedOrganization();
+    console.log(
+      'default supplier admin permissions',
+      DefaultSupplierAdminPermissions,
+    );
+    console.log(
+      'default buyer admin permissions',
+      DefaultBuyerAdminPermissions,
+    );
+    console.log('default buyer admin permissions', DefaultAdminPermission);
   }
 
   async seedOrganization() {
@@ -77,9 +93,7 @@ export class SeederService {
     const roles = [
       {
         Name: roleTypes.admin,
-        permission: [
-          AdminPermissions.any
-        ],
+        permission: DefaultAdminPermission,
         type: roleTypes.admin,
       },
       {
@@ -94,17 +108,13 @@ export class SeederService {
       },
       {
         Name: roleTypes.buyerAdmin,
-        permission: [
-         BuyerPermissions.BuyerAdminAccess
-        ],
+        permission: [...DefaultBuyerAdminPermissions],
         type: roleTypes.buyerAdmin,
       },
 
       {
         Name: roleTypes.supplierAdmin,
-        permission: [
-          SupplierPermissions.SuppierAdminAccess
-        ],
+        permission: [...DefaultSupplierAdminPermissions],
         type: roleTypes.supplierAdmin,
       },
     ] as Role[];
