@@ -115,7 +115,7 @@ export class InvoiceController {
     );
 
     const uniqueOrganizations = await this.orgRepo.find({
-      where: { code: In(uniqueCodes) },
+      where: { code: In(uniqueCodes) , parentId: organization.id },
     });
     const uniqueOrgCodes = uniqueOrganizations.map(a => a.code);
     const notfoundCodes = _.difference(uniqueCodes, uniqueOrgCodes);
@@ -235,7 +235,7 @@ export class InvoiceController {
     const uniqueCodes = _.uniq(result.rows.map(a => a.supplierCode));
 
     const uniqueOrganizations = await this.orgRepo.find({
-      where: { code: In(uniqueCodes) },
+      where: { code: In(uniqueCodes) , parentId: organization.id},
     });
     const uniqueOrgCodes = uniqueOrganizations.map(a => a.code);
     const notfoundCodes = _.difference(uniqueCodes, uniqueOrgCodes);

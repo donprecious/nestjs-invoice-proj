@@ -58,7 +58,9 @@ export class Organization extends BaseEntity {
   //   userOrganization => userOrganization.user,
   // )
   // userOrganization: UserOrganization[];
-
+  @Column({ nullable: true })
+  parentId: string;
+  
   @OneToMany(
     type => OrganizationRole,
     organizationRole => organizationRole.organization,
