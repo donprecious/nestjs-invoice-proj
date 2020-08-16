@@ -2,7 +2,7 @@ import {
   SupplierPermissions,
   permissionTypes,
   AdminPermissions,
-  BuyerPermissions,
+  BuyerPermissions,UserPermissions
 } from './../../../../shared/app/permissionsType';
 import { supplier } from './../../../../shared/oranization/organizationType';
 import { AllowPermissions } from './../../../../shared/guards/permission.decorator';
@@ -70,9 +70,7 @@ export class OrganizationController {
   constructor(
     private orgService: OrganizationRepository,
     private userRepo: UserRepository,
-
     private roleRepo: RoleRepository,
-
     private orgInvite: OrganizationInviteRepository,
     private invitationRepo: InvitationRepository,
     private appService: AppService,
@@ -353,10 +351,17 @@ export class OrganizationController {
     return AppResponse.OkSuccess({});
   }
 
+  @AllowPermissions(
+    SupplierPermissions.editSuppier,
+    SupplierPermissions.SuppierAdminAccess,
+    BuyerPermissions.BuyerAdminAccess,
+    BuyerPermissions.editBuyer,
+  )
   @ApiHeader({
     name: 'organizationId',
     description: 'provide organization id',
   })
+
   @Put('edit-user/:userId')
   async EditUser(
     @Body() editUser: EditUserDto,
@@ -392,6 +397,11 @@ export class OrganizationController {
   }
 
   // get all suppliers invitted by a buyer
+  @AllowPermissions(
+    SupplierPermissions.SuppierAdminAccess,
+    BuyerPermissions.BuyerAdminAccess,
+    BuyerPermissions.viewSuppliers
+  )
   @Get('suppliers/buyer/:buyerId')
   async mySupplier(@Param('buyerId') buyerId: string) {
     const buyerOrg = await this.orgService.findOne({ where: { id: buyerId } });
@@ -407,6 +417,9 @@ export class OrganizationController {
     return AppResponse.OkSuccess(suppliers);
   }
 
+  @AllowPermissions(
+    SupplierPermissions.listSuppier
+  )
   @Get('suppliers')
   async GetSupplier(@Query() filters: OrganizationFilter) {
     const where: FindConditions<Organization> = {
@@ -422,6 +435,9 @@ export class OrganizationController {
     return AppResponse.OkSuccess(buyer);
   }
 
+  @AllowPermissions(
+    BuyerPermissions.listBuyer
+  )
   @Get('buyers')
   async GetBuyers() {
     const buyers = await this.orgService.find({
@@ -430,6 +446,13 @@ export class OrganizationController {
     return AppResponse.OkSuccess(buyers);
   }
 
+  @AllowPermissions(
+
+    SupplierPermissions.SuppierAdminAccess,
+    BuyerPermissions.BuyerAdminAccess,
+    SupplierPermissions.viewBuyers,
+    BuyerPermissions.listBuyer
+  )
   //get all buyers a supplier belongs to
   @Get('buyers/supplier/:supplierId')
   async GetBuyerSupplier(@Param('supplierId') supplierId: string) {
@@ -452,6 +475,14 @@ export class OrganizationController {
     name: 'organizationId',
     description: 'provide organization id',
   })
+  @AllowPermissions(
+
+    SupplierPermissions.SuppierAdminAccess,
+    BuyerPermissions.BuyerAdminAccess,
+    UserPermissions.view,
+    UserPermissions.list
+
+  )
   @Get(':organizationId/users')
   async GetOrgUsers(@Param('organizationId') organizationId: string) {
     const org = await this.appService.FindOrganization(organizationId);
@@ -465,6 +496,12 @@ export class OrganizationController {
     return AppResponse.OkSuccess(users);
   }
 
+  @AllowPermissions(
+
+    SupplierPermissions.SuppierAdminAccess,
+    BuyerPermissions.BuyerAdminAccess,
+    UserPermissions.view
+  )
   @Get('users/:userId')
   async GetOrgUser(@Param('userId') userId: string) {
     const result = await this.userRepo.findOne({
@@ -494,6 +531,14 @@ export class OrganizationController {
     return AppResponse.OkSuccess(user);
   }
 
+  @AllowPermissions(
+    SupplierPermissions.viewBuyers,
+    SupplierPermissions.viewSuppier,
+    SupplierPermissions.SuppierAdminAccess,
+    BuyerPermissions.BuyerAdminAccess,
+    BuyerPermissions.viewSuppliers,
+    BuyerPermissions.ViewBuyer,
+  )
   @Get(':organizationId')
   async Get(@Param('organizationId') organizationId: string) {
     const organization = await this.orgService.findOne({
@@ -509,6 +554,4 @@ export class OrganizationController {
 
     return AppResponse.OkSuccess(organization);
   }
-
-  
 }

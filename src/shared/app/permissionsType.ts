@@ -37,14 +37,26 @@ export enum InvoicePermissions {
 export enum AdminPermissions {
   any = 'Any',
 }
+export enum UserPermissions {
+  create = 'Create_User',
+  list = 'List_User',
+  delete = 'Delete_User',
+  view = 'View_User',
+}
 
 export const DefaultBuyerPermissions = [
   BuyerPermissions.viewSuppliers,
   BuyerPermissions.ViewBuyer,
   InvoicePermissions.view,
+  InvoicePermissions.list,
+  UserPermissions.view,
+  UserPermissions.list,
 ];
 export const DefaultSupplierPermissions = [
   SupplierPermissions.viewBuyers,
   SupplierPermissions.viewSuppier,
   InvoicePermissions.view,
+  InvoicePermissions.list,
+  UserPermissions.view,
+  UserPermissions.list,
 ];
