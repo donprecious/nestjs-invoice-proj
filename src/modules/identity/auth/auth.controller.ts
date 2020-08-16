@@ -92,8 +92,24 @@ export class AuthController {
         AppResponse.badRequest('invalid login details'),
       );
     }
-    const orgs = findUser.organization as OrganizationPayloadDto;
-    const role = (findUser.role as unknown) as GetRoleDto;
+    const orgs = {
+      id: findUser.organization.id,
+      address: findUser.organization.address,
+      bankNumber: findUser.organization.bankNumber,
+      bankcode: findUser.organization.bankcode,
+      code: findUser.organization.code,
+      email: findUser.organization.email,
+      name: findUser.organization.name,
+      phone: findUser.organization.phone,
+      type: findUser.organization.type,
+      taxId: findUser.organization.taxId,
+    } as OrganizationPayloadDto;
+    const role = {
+      name: findUser.role.Name,
+      description: findUser.role.Description,
+      permissions: findUser.role.permission,
+      type: findUser.role.type,
+    } as GetRoleDto;
 
     const isCorrect = await compare(loginDto.password, findUser.passwordHash);
     if (!isCorrect) {

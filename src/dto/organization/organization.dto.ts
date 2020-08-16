@@ -13,6 +13,7 @@ export class OrganizationDto extends EntityDto {
   @AutoMap() phone: string;
 
   @AutoMap() bankcode: string;
+  @AutoMap() bankName: string;
 
   @AutoMap() bankNumber: string;
 
@@ -25,7 +26,8 @@ export class OrganizationDto extends EntityDto {
 
 export class OrganizationPayloadDto {
   id: string;
-  @AutoMap() name: string;
+  @AutoMap() name: string; 
+  
 
   @AutoMap() code: string;
 

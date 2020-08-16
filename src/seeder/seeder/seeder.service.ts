@@ -1,3 +1,4 @@
+import { AdminPermissions, BuyerPermissions, DefaultBuyerPermissions, DefaultSupplierPermissions, SupplierPermissions } from './../../shared/app/permissionsType';
 import { supplier } from './../../shared/oranization/organizationType';
 import { OrganizationRole } from './../../entities/organizationRole.entity';
 
@@ -77,30 +78,24 @@ export class SeederService {
       {
         Name: roleTypes.admin,
         permission: [
-          permissionTypes.create,
-          permissionTypes.delete,
-          permissionTypes.read,
-          permissionTypes.update,
+          AdminPermissions.any
         ],
         type: roleTypes.admin,
       },
       {
         Name: roleTypes.buyer,
-        permission: [permissionTypes.read],
+        permission: DefaultBuyerPermissions,
         type: roleTypes.buyer,
       },
       {
         Name: roleTypes.supplier,
-        permission: [permissionTypes.read],
+        permission: DefaultSupplierPermissions,
         type: roleTypes.supplier,
       },
       {
         Name: roleTypes.buyerAdmin,
         permission: [
-          permissionTypes.create,
-          permissionTypes.delete,
-          permissionTypes.read,
-          permissionTypes.update,
+         BuyerPermissions.BuyerAdminAccess
         ],
         type: roleTypes.buyerAdmin,
       },
@@ -108,10 +103,7 @@ export class SeederService {
       {
         Name: roleTypes.supplierAdmin,
         permission: [
-          permissionTypes.create,
-          permissionTypes.delete,
-          permissionTypes.read,
-          permissionTypes.update,
+          SupplierPermissions.SuppierAdminAccess
         ],
         type: roleTypes.supplierAdmin,
       },

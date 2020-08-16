@@ -13,7 +13,6 @@ export class OrganizationInvite extends BaseEntity {
 
   @ManyToOne(
     type => Organization,
-    // organization => organization.userOrganization,
   )
   inviteeOrganization: Organization;
 }

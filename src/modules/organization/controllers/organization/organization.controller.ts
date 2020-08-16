@@ -1,3 +1,11 @@
+import {
+  SupplierPermissions,
+  permissionTypes,
+  AdminPermissions,
+  BuyerPermissions,
+} from './../../../../shared/app/permissionsType';
+import { supplier } from './../../../../shared/oranization/organizationType';
+import { AllowPermissions } from './../../../../shared/guards/permission.decorator';
 import { RolePermissionGuard } from './../../../../shared/guards/role-permission.guard';
 import { OrganizationFilter } from './../../../../dto/organization/organization.dto';
 import { organizationType } from './../../../../shared/app/organizationType';
@@ -54,8 +62,8 @@ import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception
 import { String } from 'lodash';
 import { PromiseUtils, FindConditions, Like } from 'typeorm';
 import { GetRoleDto } from 'src/dto/role/role.dto';
-@UseGuards(JwtAuthGuard)
-// @UseGuards(RolePermissionGuard)
+@UseGuards(JwtAuthGuard, RolePermissionGuard)
+@AllowPermissions(AdminPermissions.any)
 @ApiTags('organization')
 @Controller('organization')
 export class OrganizationController {
@@ -77,6 +85,12 @@ export class OrganizationController {
     description: 'provide organization id',
   })
   @Post()
+  @AllowPermissions(
+    SupplierPermissions.createSuppier,
+    SupplierPermissions.SuppierAdminAccess,
+    BuyerPermissions.BuyerAdminAccess,
+    BuyerPermissions.createBuyer,
+  )
   async create(@Body() createOrg: CreateOrganizationDto, @Request() req) {
     let organization: Organization;
     if (createOrg.type == organizationType.supplier) {
@@ -99,6 +113,7 @@ export class OrganizationController {
       );
     }
 
+    org.parentId = organization.id;
     await this.orgService.insert(org);
 
     const orgInvite = {
@@ -110,6 +125,12 @@ export class OrganizationController {
     return AppResponse.OkSuccess(org);
   }
 
+  @AllowPermissions(
+    SupplierPermissions.editSuppier,
+    SupplierPermissions.SuppierAdminAccess,
+    BuyerPermissions.BuyerAdminAccess,
+    BuyerPermissions.editBuyer,
+  )
   @Put(':organizationId')
   async edit(
     @Body() editOrg: EditOrganizationDto,
@@ -156,6 +177,12 @@ export class OrganizationController {
     return AppResponse.OkSuccess(organization);
   }
 
+  @AllowPermissions(
+    SupplierPermissions.addSupplierUser,
+    SupplierPermissions.SuppierAdminAccess,
+    BuyerPermissions.BuyerAdminAccess,
+    BuyerPermissions.addBuyerUser,
+  )
   @ApiHeader({
     name: 'organizationId',
     description: 'provide organization id',
@@ -220,6 +247,7 @@ export class OrganizationController {
         HttpStatus.BAD_REQUEST,
       );
     }
+    org.parentId = organization.id;
     await this.orgService.insert(org);
 
     user.organization = org;
@@ -448,7 +476,7 @@ export class OrganizationController {
       throw new NotFoundException(AppResponse.NotFound());
     }
     const role = {
-      Permissions: result.role.permission,
+      permissions: result.role.permission,
       description: result.role.Description,
       name: result.role.Name,
       type: result.role.type,
@@ -481,4 +509,6 @@ export class OrganizationController {
 
     return AppResponse.OkSuccess(organization);
   }
+
+  
 }
