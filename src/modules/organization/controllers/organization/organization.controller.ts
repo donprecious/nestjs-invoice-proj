@@ -1,7 +1,6 @@
 import {
   SupplierPermissions,
-  permissionTypes,
-  AdminPermissions,
+
   BuyerPermissions,UserPermissions
 } from './../../../../shared/app/permissionsType';
 import { supplier } from './../../../../shared/oranization/organizationType';
@@ -63,7 +62,6 @@ import { String } from 'lodash';
 import { PromiseUtils, FindConditions, Like } from 'typeorm';
 import { GetRoleDto } from 'src/dto/role/role.dto';
 @UseGuards(JwtAuthGuard, RolePermissionGuard)
-@AllowPermissions(AdminPermissions.any)
 @ApiTags('organization')
 @Controller('organization')
 export class OrganizationController {
@@ -85,8 +83,6 @@ export class OrganizationController {
   @Post()
   @AllowPermissions(
     SupplierPermissions.createSuppier,
-    SupplierPermissions.SuppierAdminAccess,
-    BuyerPermissions.BuyerAdminAccess,
     BuyerPermissions.createBuyer,
   )
   async create(@Body() createOrg: CreateOrganizationDto, @Request() req) {
@@ -125,8 +121,6 @@ export class OrganizationController {
 
   @AllowPermissions(
     SupplierPermissions.editSuppier,
-    SupplierPermissions.SuppierAdminAccess,
-    BuyerPermissions.BuyerAdminAccess,
     BuyerPermissions.editBuyer,
   )
   @Put(':organizationId')
@@ -177,8 +171,6 @@ export class OrganizationController {
 
   @AllowPermissions(
     SupplierPermissions.addSupplierUser,
-    SupplierPermissions.SuppierAdminAccess,
-    BuyerPermissions.BuyerAdminAccess,
     BuyerPermissions.addBuyerUser,
   )
   @ApiHeader({
@@ -353,8 +345,7 @@ export class OrganizationController {
 
   @AllowPermissions(
     SupplierPermissions.editSuppier,
-    SupplierPermissions.SuppierAdminAccess,
-    BuyerPermissions.BuyerAdminAccess,
+
     BuyerPermissions.editBuyer,
   )
   @ApiHeader({
@@ -398,8 +389,6 @@ export class OrganizationController {
 
   // get all suppliers invitted by a buyer
   @AllowPermissions(
-    SupplierPermissions.SuppierAdminAccess,
-    BuyerPermissions.BuyerAdminAccess,
     BuyerPermissions.viewSuppliers
   )
   @Get('suppliers/buyer/:buyerId')
@@ -447,9 +436,6 @@ export class OrganizationController {
   }
 
   @AllowPermissions(
-
-    SupplierPermissions.SuppierAdminAccess,
-    BuyerPermissions.BuyerAdminAccess,
     SupplierPermissions.viewBuyers,
     BuyerPermissions.listBuyer
   )
@@ -476,9 +462,6 @@ export class OrganizationController {
     description: 'provide organization id',
   })
   @AllowPermissions(
-
-    SupplierPermissions.SuppierAdminAccess,
-    BuyerPermissions.BuyerAdminAccess,
     UserPermissions.view,
     UserPermissions.list
 
@@ -497,9 +480,6 @@ export class OrganizationController {
   }
 
   @AllowPermissions(
-
-    SupplierPermissions.SuppierAdminAccess,
-    BuyerPermissions.BuyerAdminAccess,
     UserPermissions.view
   )
   @Get('users/:userId')
@@ -533,10 +513,6 @@ export class OrganizationController {
 
   @AllowPermissions(
     SupplierPermissions.viewBuyers,
-    SupplierPermissions.viewSuppier,
-    SupplierPermissions.SuppierAdminAccess,
-    BuyerPermissions.BuyerAdminAccess,
-    BuyerPermissions.viewSuppliers,
     BuyerPermissions.ViewBuyer,
   )
   @Get(':organizationId')

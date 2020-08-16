@@ -3,7 +3,7 @@ import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import * as _ from 'lodash';
-import { AdminPermissions } from '../app/permissionsType';
+
 
 @Injectable()
 export class RolePermissionGuard implements CanActivate {
@@ -29,9 +29,7 @@ export class RolePermissionGuard implements CanActivate {
   }
 
   matchPermissions(requiredPermissions, userPermissions) {
-    if (_.includes([AdminPermissions.any], userPermissions)) {
-      return true;
-    }
+ 
     const sameValues = _.intersection(requiredPermissions, userPermissions);
     if (sameValues.length > 0) return true;
     return false;

@@ -1,10 +1,3 @@
-export const permissionTypes = {
-  read: 'read',
-  create: 'create',
-  update: 'update',
-  delete: 'delete',
-};
-
 export enum BuyerPermissions {
   createBuyer = 'Create_Buyer',
   editBuyer = 'Edit_Buyer',
@@ -13,7 +6,7 @@ export enum BuyerPermissions {
   deleteBuyer = 'Delete_Buyer',
   viewSuppliers = 'View_Own_Supplier',
   addBuyerUser = 'Add_Buyer_User',
-  BuyerAdminAccess = 'Buyer_AdminAccess',
+  
 }
 export enum SupplierPermissions {
   createSuppier = 'Create_Suppier',
@@ -23,7 +16,6 @@ export enum SupplierPermissions {
   deleteSuppier = 'Delete_Suppier',
   viewBuyers = 'View_Own_Buyer',
   addSupplierUser = 'Add_Suppier_User',
-  SuppierAdminAccess = 'Suppier_AdminAcess',
 }
 
 export enum InvoicePermissions {
@@ -34,9 +26,6 @@ export enum InvoicePermissions {
   view = 'View_Invoice',
 }
 
-export enum AdminPermissions {
-  any = 'Any',
-}
 export enum UserPermissions {
   create = 'Create_User',
   list = 'List_User',
@@ -59,4 +48,53 @@ export const DefaultSupplierPermissions = [
   InvoicePermissions.list,
   UserPermissions.view,
   UserPermissions.list,
+];
+
+export const DefaultSupplierAdminPermissions = [
+  ...DefaultSupplierPermissions,
+  SupplierPermissions.createSuppier,
+  SupplierPermissions.addSupplierUser,
+  SupplierPermissions.editSuppier,
+  InvoicePermissions.create,
+  InvoicePermissions.edit,
+  InvoicePermissions.delete,
+];
+export const DefaultBuyerAdminPermissions = [
+  ...DefaultBuyerPermissions,
+  BuyerPermissions.createBuyer,
+  BuyerPermissions.addBuyerUser,
+  BuyerPermissions.editBuyer,
+  InvoicePermissions.create,
+  InvoicePermissions.edit,
+  InvoicePermissions.delete,
+];
+
+export const DefaultAdminPermission = [
+  BuyerPermissions.ViewBuyer,
+  BuyerPermissions.addBuyerUser,
+  BuyerPermissions.createBuyer,
+  BuyerPermissions.deleteBuyer,
+  BuyerPermissions.editBuyer,
+  BuyerPermissions.listBuyer,
+  BuyerPermissions.viewSuppliers,
+
+  SupplierPermissions.addSupplierUser,
+  SupplierPermissions.createSuppier,
+  SupplierPermissions.deleteSuppier,
+  SupplierPermissions.editSuppier,
+  SupplierPermissions.listSuppier,
+  SupplierPermissions.viewBuyers,
+  SupplierPermissions.viewSuppier,
+
+
+  InvoicePermissions.create,
+  InvoicePermissions.delete,
+  InvoicePermissions.edit,
+  InvoicePermissions.list,
+  InvoicePermissions.view,
+
+  UserPermissions.create,
+  UserPermissions.delete,
+  UserPermissions.list,
+  UserPermissions.view,
 ];
