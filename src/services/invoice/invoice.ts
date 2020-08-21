@@ -23,7 +23,6 @@ export class InvoiceRepository extends Repository<Invoice> {
     orgType: OrganizationTypeEnum,
     organization: Organization = null,
   ) {
-
     let count = 0;
     let totalDiscountAmountSum = 0;
     let invoice: Invoice[] = [];
@@ -46,18 +45,18 @@ export class InvoiceRepository extends Repository<Invoice> {
       });
     }
     if (orgType == OrganizationTypeEnum.Admin) {
-      count = await this.count({
-       
-      });
+      count = await this.count({});
       invoice = await this.find({
         select: ['discountAmount'],
-    
       });
     }
     console.log('discountAmount', invoice);
     totalDiscountAmountSum = _.sumBy(invoice, a => Number(a.discountAmount));
 
-    const res = { totalDiscountAmountSum, count };
+    const res = {
+      valueOfInvoice: totalDiscountAmountSum,
+      numberOfInvoice: count,
+    };
     return res;
   }
 }

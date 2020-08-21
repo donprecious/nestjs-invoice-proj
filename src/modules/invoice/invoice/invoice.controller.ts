@@ -1,3 +1,4 @@
+import { organizationType } from './../../../shared/app/organizationType';
 import { InvoiceParameter } from './../../../dto/invoice/invoice.dto';
 import { InvoicePermissions } from './../../../shared/app/permissionsType';
 import { supplier } from './../../../shared/oranization/organizationType';
@@ -407,9 +408,12 @@ export class InvoiceController {
   @Get('overview')
   async GetOverview(@Query() param: InvoiceParameter) {
     const loggedInUser = await this.appService.getLoggedUser();
-    if (loggedInUser.organization.type != param.type) {
-      throw new UnauthorizedException();
+    if (loggedInUser.organization.type != OrganizationTypeEnum.Admin) {
+      if (loggedInUser.organization.type != param.type) {
+        throw new UnauthorizedException();
+      }
     }
+
     if (
       param.type == OrganizationTypeEnum.Buyer ||
       param.type == OrganizationTypeEnum.Supplier
