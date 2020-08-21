@@ -1,6 +1,7 @@
 import { OrganizationDto } from './../organization/organization.dto';
-import { IsDate, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsDate, IsIn, IsNotEmpty, IsNumber } from 'class-validator';
 import { EntityDto } from './../entityDto.shated';
+import { OrganizationTypeEnum } from 'src/shared/app/organizationType';
 
 export class InvoiceDto extends EntityDto {
   @IsNotEmpty()
@@ -20,4 +21,14 @@ export class InvoiceDto extends EntityDto {
   supplier: OrganizationDto;
 
   createdByOrganization: OrganizationDto;
+}
+
+export class InvoiceParameter {
+  @IsIn([
+    OrganizationTypeEnum.Admin,
+    OrganizationTypeEnum.Supplier,
+    OrganizationTypeEnum.Buyer,
+  ])
+  type: OrganizationTypeEnum;
+  value: string;
 }

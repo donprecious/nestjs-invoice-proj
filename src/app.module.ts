@@ -36,6 +36,7 @@ import { HealthController } from './health/health.controller';
         database: configService.get(ConfigConstant.database.name),
         entities: ['dist/**/*.entity{.ts,.js}'],
         autoLoadEntities: true,
+        logging: true,
       }),
       inject: [ConfigService],
     }),
@@ -44,7 +45,7 @@ import { HealthController } from './health/health.controller';
     SeederModule,
     IdentityModule,
     InvoiceModule,
-    TerminusModule
+    TerminusModule,
   ],
   controllers: [HealthController],
   providers: [

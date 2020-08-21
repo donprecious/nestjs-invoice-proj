@@ -1,3 +1,4 @@
+import { InvoiceParameter } from './../../../dto/invoice/invoice.dto';
 import { InvoicePermissions } from './../../../shared/app/permissionsType';
 import { supplier } from './../../../shared/oranization/organizationType';
 import {
@@ -40,6 +41,7 @@ import {
   Post,
   Query,
   Request,
+  UnauthorizedException,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
@@ -54,6 +56,7 @@ import moment = require('moment');
 
 import { AllowPermissions } from 'src/shared/guards/permission.decorator';
 import { RolePermissionGuard } from 'src/shared/guards/role-permission.guard';
+import { OrganizationTypeEnum } from 'src/shared/app/organizationType';
 
 @UseGuards(JwtAuthGuard, RolePermissionGuard)
 @ApiTags('invoice')
@@ -399,6 +402,30 @@ export class InvoiceController {
       totalCount: result[1],
     };
     return AppResponse.OkSuccess(pageRes);
+  }
+
+  @Get('overview')
+  async GetOverview(@Query() param: InvoiceParameter) {
+    const loggedInUser = await this.appService.getLoggedUser();
+    if (loggedInUser.organization.type != param.type) {
+      throw new UnauthorizedException();
+    }
+    if (
+      param.type == OrganizationTypeEnum.Buyer ||
+      param.type == OrganizationTypeEnum.Supplier
+    ) {
+      if (!param.value || param.value == '') {
+        param.value = loggedInUser.organization.id;
+        //  throw new BadRequestException(AppResponse.badRequest("the key value is not present in query param"));
+      }
+    }
+    const organization = await this.orgRepo.findOne(param.value);
+    console.log(organization);
+    const result = await this.invoiceRepo.GetInvoiceOverview(
+      param.type,
+      organization,
+    );
+    return AppResponse.OkSuccess(result);
   }
 
   @AllowPermissions(InvoicePermissions.view)
