@@ -16,11 +16,11 @@ export class RolePermissionGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
+    const request = context.switchToHttp().getRequest();
 
-    if (!permissions) {
+    if (permissions.length == 0) {
       return true;
     }
-    const request = context.switchToHttp().getRequest();
 
     const user = request.user as JwtPayloadDto;
 
