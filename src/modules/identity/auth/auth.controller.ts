@@ -158,9 +158,10 @@ export class AuthController {
       token;
     const message = `Hello, you have initiated a password reset , 
     if you didnt ignore  otherwise  <br> click this link to <a href=${forgetPasswordUrl}>reset password</a>`;
+    const template = getTemplate(message);
     const emailMessage: EmailDto = {
       to: [findUser.email],
-      body: message,
+      body: template,
       subject: 'reset password',
     };
     this.emailSerice.sendEmail(emailMessage).subscribe(d => console.log(d));

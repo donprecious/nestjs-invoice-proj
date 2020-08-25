@@ -1,3 +1,4 @@
+import { getTemplate } from './../../../../providers/EmailTemplate/welcome';
 import { invitationStatus } from './../../../../shared/entity/entityStatus';
 import { UserRepository } from './../../../../services/user/userService';
 import { OrganizationRepository } from 'src/services/organization/organizationService';
@@ -147,9 +148,10 @@ export class InvitationController {
     if (updateStatus.status == invitationStatus.accepted) {
       const message = `Invitation Accepted! , Activate your account with this Otp : <b>${otp}</b>
       `;
+      const template = getTemplate(message);
       const emailMessage: EmailDto = {
         to: [updateUser.email],
-        body: message,
+        body: template,
         subject: 'Activate your Account',
       };
       this.emailSerice.sendEmail(emailMessage).subscribe(d => console.log(d));
@@ -183,13 +185,13 @@ export class InvitationController {
 
     const message = ` Activate your account with your Otp : <b>${otp}</b>
     `;
+    const template = getTemplate(message);
     const emailMessage: EmailDto = {
       to: [updateUser.email],
-      body: message,
+      body: template,
       subject: 'Activate your Account',
     };
     this.emailSerice.sendEmail(emailMessage).subscribe(d => console.log(d));
     return AppResponse.OkSuccess(null, 'otp sent');
   }
- 
 }
