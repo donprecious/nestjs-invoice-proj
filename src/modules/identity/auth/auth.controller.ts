@@ -37,6 +37,7 @@ import moment = require('moment');
 import { Timestamp } from 'typeorm';
 import { async } from 'rxjs/internal/scheduler/async';
 import { JwtAuthGuard } from './jwtauth.guard';
+import { getTemplate } from 'src/providers/EmailTemplate/welcome';
 
 @ApiTags('auth')
 @Controller('auth')
