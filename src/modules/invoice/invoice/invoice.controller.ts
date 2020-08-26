@@ -1,7 +1,10 @@
 import { organizationType } from './../../../shared/app/organizationType';
 import { InvoiceParameter } from './../../../dto/invoice/invoice.dto';
 import { InvoicePermissions } from './../../../shared/app/permissionsType';
-import { supplier } from './../../../shared/oranization/organizationType';
+import {
+  supplier,
+  buyer,
+} from './../../../shared/oranization/organizationType';
 import {
   PaginationQueryParam,
   PaginatedResultDto,
@@ -49,7 +52,13 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/modules/identity/auth/jwtauth.guard';
 import { AnyFilesInterceptor } from '@nestjs/platform-express/multer/interceptors/any-files.interceptor';
-import { Any, FindConditions, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import {
+  Any,
+  Between,
+  FindConditions,
+  LessThanOrEqual,
+  MoreThanOrEqual,
+} from 'typeorm';
 import { AppService } from 'src/services/app/app.service';
 import { EmailService } from 'src/services/notification/email/email.service';
 import { ConfigService } from '@nestjs/config';
@@ -336,21 +345,64 @@ export class InvoiceController {
   ) {
     console.log('param', param);
     const skippedItems = (param.page - 1) * param.limit;
-    const where: FindConditions<Invoice> = {};
+
+    const where: FindConditions<Invoice>[] = [];
     if (filter.amount) {
-      where.amount = filter.amount;
+      where.push({ amount: filter.amount });
+      // where.amount = filter.amount;
     }
+    if (filter.fromAmount && filter.toAmount) {
+      where.push({
+        amount: Between(Number(filter.fromAmount), Number(filter.toAmount)),
+      });
+    }
+    // if (filter.toAmount) {
+    //   where.push({ amount: LessThanOrEqual<number>(Number(filter.toAmount)) });
+    //   // where.amount = LessThanOrEqual(filter.amount);
+    // }
+    if (filter.discountAmount) {
+      where.push({ discountAmount: filter.discountAmount });
+      // where.discountAmount = filter.discountAmount;
+    }
+
+    if (filter.fromDiscountAmount && filter.toDiscountAmount) {
+      where.push({
+        discountAmount: Between(
+          Number(filter.fromDiscountAmount),
+          Number(filter.toDiscountAmount),
+        ),
+      });
+      // where.amount =  MoreThanOrEqual(filter.fromDiscountAmount);
+    }
+
     if (filter.invoiceNumber) {
-      where.invoiceNumber = filter.invoiceNumber;
+      where.push({ invoiceNumber: filter.invoiceNumber });
     }
+
     if (filter.supplierCode) {
       const supplier = await this.orgRepo.findOne({
         where: { code: filter.supplierCode },
       });
       if (supplier) {
-        where.createdForOrganization = supplier;
+        where.push({ createdForOrganization: supplier });
       }
-      // where.createdForOrganization = { code: filter.supplierCode };
+    }
+
+    if (filter.supplierName) {
+      const supplier = await this.orgRepo.findOne({
+        where: { name: filter.supplierName },
+      });
+      if (supplier) {
+        where.push({ createdForOrganization: supplier });
+      }
+    }
+    if (filter.buyerName) {
+      const buyer = await this.orgRepo.findOne({
+        where: { name: filter.buyerName },
+      });
+      if (buyer) {
+        where.push({ createdByOrganization: buyer });
+      }
     }
 
     if (filter.fromDueDate && filter.toDueDate) {
@@ -364,20 +416,16 @@ export class InvoiceController {
       }
     }
 
-    if (filter.fromDueDate) {
+    if (filter.fromDueDate && filter.toDueDate) {
       if (moment(filter.fromDueDate).isValid()) {
-        const date = moment(
-          moment(filter.fromDueDate).format('YYYY MM DD'),
-        ).toDate();
-        where.dueDate = MoreThanOrEqual(date);
-      }
-    }
-    if (filter.toDueDate) {
-      if (moment(filter.toDueDate).isValid()) {
-        const date = moment(
-          moment(filter.toDueDate).format('YYYY MM DD'),
-        ).toDate();
-        where.dueDate = LessThanOrEqual(date);
+        const fromDate = moment(
+          moment(filter.fromDueDate).format('DD-MM-YYYY'),
+        ).format();
+        const toDate = moment(
+          moment(filter.toDueDate).format('DD-MM-YYYY'),
+        ).format();
+
+        where.push({ dueDate: Between(fromDate, toDate) });
       }
     }
 

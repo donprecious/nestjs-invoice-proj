@@ -24,7 +24,8 @@ export class InvoiceDto extends EntityDto {
   paymentDate: Date;
 
   createdForOrganization: OrganizationDto;
-  createdByOrganization: OrganizationDto;
+  createdByOrganization: OrganizationDto; 
+  
 }
 
 export class InvoiceParameter {
