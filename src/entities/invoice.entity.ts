@@ -10,14 +10,20 @@ export class Invoice extends BaseEntity {
   @Column()
   currencyCode: string;
 
-  @Column({ type: 'decimal' })
+  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
   amount: number;
 
   @Column({ type: 'timestamp' })
   dueDate: Date;
 
-  @Column({ type: 'decimal', nullable: true })
+  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
   discountAmount: number;
+
+  @Column({ nullable: true })
+  paymentReference: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  paymentDate: Date;
 
   @ManyToOne(type => Organization)
   createdForOrganization: Organization;

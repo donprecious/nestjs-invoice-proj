@@ -20,7 +20,12 @@ export class InvoiceDto extends EntityDto {
 
   supplier: OrganizationDto;
 
-  createdByOrganization: OrganizationDto;
+  paymentReference: string;
+  paymentDate: Date;
+
+  createdForOrganization: OrganizationDto;
+  createdByOrganization: OrganizationDto; 
+  
 }
 
 export class InvoiceParameter {

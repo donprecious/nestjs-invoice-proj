@@ -24,7 +24,6 @@
     "add-migration": "npm run typeorm migration:generate -- -n ",
     "new-migration": "npm run typeorm migration:create -- -n ",
     "revert-migration": "npm run typeorm migration:revert"
-
   },
   "dependencies": {
     "@nestjs/common": "^7.0.0",
@@ -42,6 +41,7 @@
     "bcrypt": "^5.0.0",
     "class-transformer": "^0.2.3",
     "class-validator": "^0.12.2",
+    "date-fns": "^2.15.0",
     "lodash": "^4.17.19",
     "moment": "^2.27.0",
     "mysql": "^2.18.1",
