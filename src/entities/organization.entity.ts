@@ -1,5 +1,5 @@
 import { type } from 'os';
-import { OrganizationRole } from './organizationRole.entity';
+
 import { Address } from './../dto/organization/organization.dto';
 import { BaseEntity } from './../shared/entity/baseEntity';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
@@ -8,6 +8,7 @@ import { AutoMap } from 'nestjsx-automapper';
 import { Type } from 'class-transformer';
 import { organizationStatus } from 'src/shared/app/organizationStatus';
 import { User } from './User.entity';
+import { Role } from './Role.entity';
 
 @Entity()
 export class Organization extends BaseEntity {
@@ -53,20 +54,14 @@ export class Organization extends BaseEntity {
   @Column({ default: 'active' })
   status: string;
 
-  // @OneToMany(
-  //   type => UserOrganization,
-  //   userOrganization => userOrganization.user,
-  // )
-  // userOrganization: UserOrganization[];
   @Column({ nullable: true })
   parentId: string;
-  
+
   @OneToMany(
-    type => OrganizationRole,
-    organizationRole => organizationRole.organization,
-    { onDelete: 'CASCADE' },
+    type => Role,
+    role => role.organization,
   )
-  organizationRoles: OrganizationRole[];
+  roles: Role[];
 
   @OneToMany(
     type => User,

@@ -5,7 +5,7 @@ import { RoleRepository } from './../../services/role/roleService';
 import {
   OrganizationInviteRepository,
   InvitationRepository,
-  OrganizationRoleRepository,
+ 
 } from './../../services/organization/organizationService';
 
 import { HttpModule, Module } from '@nestjs/common';
@@ -28,7 +28,6 @@ import { AppService } from 'src/services/app/app.service';
       OrganizationInviteRepository,
       InvitationRepository,
       InvoiceRepository,
-      OrganizationRoleRepository,
     ]),
     HttpModule,
     ConfigModule,
