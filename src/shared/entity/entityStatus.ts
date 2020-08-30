@@ -8,3 +8,9 @@ export const invitationStatus = {
   canceled: 'canceled',
   accepted: 'accepted',
 };
+
+export enum RoleAccessableType {
+  private = 'private',
+
+  public = 'public',
+}

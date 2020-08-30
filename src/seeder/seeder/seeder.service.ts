@@ -1,3 +1,4 @@
+import { RoleAccessableType } from './../../shared/entity/entityStatus';
 import {
   BuyerPermissions,
   DefaultBuyerPermissions,
@@ -8,7 +9,6 @@ import {
   DefaultAdminPermission,
 } from './../../shared/app/permissionsType';
 import { supplier } from './../../shared/oranization/organizationType';
-import { OrganizationRole } from './../../entities/organizationRole.entity';
 
 import { ConfigConstant } from 'src/shared/constants/ConfigConstant';
 import { ConfigService } from '@nestjs/config';
@@ -95,27 +95,32 @@ export class SeederService {
         Name: roleTypes.admin,
         permission: DefaultAdminPermission,
         type: roleTypes.admin,
+        accessiblilty: RoleAccessableType.private,
       },
       {
         Name: roleTypes.buyer,
         permission: DefaultBuyerPermissions,
         type: roleTypes.buyer,
+        accessiblilty: RoleAccessableType.public,
       },
       {
         Name: roleTypes.supplier,
         permission: DefaultSupplierPermissions,
         type: roleTypes.supplier,
+        accessiblilty: RoleAccessableType.public,
       },
       {
         Name: roleTypes.buyerAdmin,
         permission: [...DefaultBuyerAdminPermissions],
         type: roleTypes.buyerAdmin,
+        accessiblilty: RoleAccessableType.public,
       },
 
       {
         Name: roleTypes.supplierAdmin,
         permission: [...DefaultSupplierAdminPermissions],
         type: roleTypes.supplierAdmin,
+        accessiblilty: RoleAccessableType.public,
       },
     ] as Role[];
 

@@ -7,8 +7,9 @@ import { AuthController } from './auth/auth.controller';
 import { JwtModule } from '@nestjs/jwt/dist/jwt.module';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
+import { RoleController } from './role/role.controller';
 @Module({
-  controllers: [AuthController],
+  controllers: [AuthController, RoleController],
   imports: [
     SharedModule,
     ConfigModule,
