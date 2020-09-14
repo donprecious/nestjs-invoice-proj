@@ -72,6 +72,7 @@ export class InvoiceFilter {
   toPaymentDate?: Date;
 
   supplierCode?: string;
+  buyerCode?: string;
   supplierName?: string;
   buyerName?: string;
 }

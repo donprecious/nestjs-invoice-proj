@@ -154,7 +154,7 @@ export class InvoiceController {
         invoiceNumber: row.invoiceNumber,
         currencyCode: row.currencyCode,
         dueDate: row.dueDate,
-        discountAmount: 0.95*row.amount,
+        discountAmount: 0.95 * row.amount,
         createdByOrganization: organization,
         createdForOrganization: uniqueOrganizations.find(
           a => a.code == row.supplierCode,
@@ -271,7 +271,7 @@ export class InvoiceController {
     for (const row of result.rows) {
       const invoice = {
         amount: row.amount,
-        discountAmount: 0.95*row.amount,
+        discountAmount: 0.95 * row.amount,
         invoiceNumber: row.invoiceNo,
         currencyCode: row.currencyCode,
         dueDate: row.dueDate,
@@ -349,22 +349,28 @@ export class InvoiceController {
     const skippedItems = (param.page - 1) * param.limit;
 
     const where: FindConditions<Invoice>[] = [];
+    const where1: FindConditions<Invoice> = {};
     if (filter.amount) {
-      where.push({ amount: filter.amount });
-      // where.amount = filter.amount;
+      // where.push({ amount: filter.amount });
+      where1.amount = filter.amount;
     }
     if (filter.fromAmount && filter.toAmount) {
-      where.push({
-        amount: Between(Number(filter.fromAmount), Number(filter.toAmount)),
-      });
+      // where.push({
+      //   amount: Between(Number(filter.fromAmount), Number(filter.toAmount)),
+      // });
+      where1.amount = Between(
+        Number(filter.fromAmount),
+        Number(filter.toAmount),
+      );
     }
     // if (filter.toAmount) {
     //   where.push({ amount: LessThanOrEqual<number>(Number(filter.toAmount)) });
     //   // where.amount = LessThanOrEqual(filter.amount);
     // }
     if (filter.discountAmount) {
-      where.push({ discountAmount: filter.discountAmount });
-      // where.discountAmount = filter.discountAmount;
+      // where.push({ discountAmount: filter.discountAmount });
+
+      where1.discountAmount = filter.discountAmount;
     }
 
     if (filter.fromDiscountAmount && filter.toDiscountAmount) {
@@ -374,11 +380,17 @@ export class InvoiceController {
           Number(filter.toDiscountAmount),
         ),
       });
+      where1.discountAmount = Between(
+        Number(filter.fromDiscountAmount),
+        Number(filter.toDiscountAmount),
+      );
+
       // where.amount =  MoreThanOrEqual(filter.fromDiscountAmount);
     }
 
     if (filter.invoiceNumber) {
-      where.push({ invoiceNumber: filter.invoiceNumber });
+      where1.invoiceNumber = filter.invoiceNumber;
+      // where.push({ invoiceNumber: filter.invoiceNumber });
     }
 
     if (filter.supplierCode) {
@@ -386,7 +398,17 @@ export class InvoiceController {
         where: { code: filter.supplierCode },
       });
       if (supplier) {
-        where.push({ createdForOrganization: supplier });
+        // where.push({ createdForOrganization: supplier });
+        where1.createdForOrganization = supplier;
+      }
+    }
+    if (filter.buyerCode) {
+      const buyer = await this.orgRepo.findOne({
+        where: { code: filter.buyerCode },
+      });
+      if (buyer) {
+        // where.push({ createdByOrganization: buyer });
+        where1.createdByOrganization = buyer;
       }
     }
 
@@ -395,7 +417,8 @@ export class InvoiceController {
         where: { name: filter.supplierName },
       });
       if (supplier) {
-        where.push({ createdForOrganization: supplier });
+        // where.push({ createdForOrganization: supplier });
+        where1.createdForOrganization = supplier;
       }
     }
     if (filter.buyerName) {
@@ -403,7 +426,8 @@ export class InvoiceController {
         where: { name: filter.buyerName },
       });
       if (buyer) {
-        where.push({ createdByOrganization: buyer });
+        // where.push({ createdByOrganization: buyer });
+        where1.createdByOrganization = buyer;
       }
     }
 
@@ -426,8 +450,9 @@ export class InvoiceController {
         const toDate = moment(
           moment(filter.toDueDate).format('DD-MM-YYYY'),
         ).format();
+        where1.dueDate = Between(fromDate, toDate);
 
-        where.push({ dueDate: Between(fromDate, toDate) });
+        // where.push({ dueDate: Between(fromDate, toDate) });
       }
     }
 
@@ -443,7 +468,7 @@ export class InvoiceController {
       relations: ['createdByOrganization', 'createdForOrganization'],
       skip: skippedItems,
       take: param.limit,
-      where: where,
+      where: where1,
       order: { dueDate: 'DESC' },
     });
     const pageRes: PaginatedResultDto = {
