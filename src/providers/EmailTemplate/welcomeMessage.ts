@@ -2,7 +2,7 @@ import * as _ from 'lodash';
 const welcomeMessage = `
 Hello {username},
 <br /><br />
- You are invited to join UAC's Early Payment's Program provided by Front Edge Capital. This is a program where preferred UAC suppliers can receive accelerated financing on their invoices. In order to get early payment on all of your outstanding and ongoing invoices please click the link below to activate your account.
+ You are invited to join ARM's Early Payment's Program provided by Front Edge Capital. This is a program where preferred ARM suppliers can receive accelerated financing on their invoices. In order to get early payment on all of your outstanding and ongoing invoices please click the link below to activate your account.
   {link}
  <br /><br />
  
