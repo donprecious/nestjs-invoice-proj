@@ -166,12 +166,14 @@ export class RoleController {
     const where: FindConditions<Role>[] = [
       {
         organization: organization,
+        type: organization.type,
       },
       {
         accessiblilty: In([
           RoleAccessableType.public,
           // RoleAccessableType.private,
         ]),
+        type: organization.type,
       },
     ];
     if (search && search != '') {

@@ -255,12 +255,14 @@ export class OrganizationController {
     }
 
     // todo create invitation and sent email to this user
+    const expiresIn = this.appService.generateInvitationExpireTime().toDate();
     const invitation = {
       invitedByUser: currentUser, // update to current loggedin user
       confirmationType: roleTypes.supplierAdmin,
       organization: org,
       status: invitationStatus.pending,
       user: user,
+      ExpiresIn: expiresIn,
     } as Invitation;
     await this.invitationRepo.save(invitation);
     // todo send email to this user with invitation link]
@@ -323,13 +325,14 @@ export class OrganizationController {
     user.role = role;
     user.organization = org;
     await this.userRepo.insert(user);
-
+    const expiresIn = this.appService.generateInvitationExpireTime().toDate();
     const invitation = {
       invitedByUser: currentUser, // update to current loggedin user
       confirmationType: roleTypes.supplierAdmin,
       organization: org,
       status: invitationStatus.pending,
       user: user,
+      ExpiresIn: expiresIn,
     } as Invitation;
     await this.invitationRepo.save(invitation);
     // todo send email to this user with invitation link]
