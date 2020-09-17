@@ -19,4 +19,7 @@ export class Invitation extends BaseEntity {
 
   @Column({ nullable: true })
   status: string;
+
+  @Column({ nullable: true, type: 'timestamp' })
+  ExpiresIn?: Date;
 }

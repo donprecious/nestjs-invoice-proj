@@ -8,6 +8,10 @@ import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { BadRequestException } from '@nestjs/common/exceptions/bad-request.exception';
 import { AppResponse } from 'src/shared/helpers/appresponse';
+import { ConfigService } from '@nestjs/config';
+import { Moment } from 'moment';
+import moment = require('moment');
+import { ConfigConstant } from 'src/shared/constants/ConfigConstant';
 
 @Injectable()
 export class AppService {
@@ -15,6 +19,7 @@ export class AppService {
     @Inject(REQUEST) private request: Request,
     private orgRepo: OrganizationRepository,
     private userRepo: UserRepository,
+    private configService: ConfigService,
   ) {}
 
   async getOrganization(): Promise<Organization> {
@@ -40,7 +45,6 @@ export class AppService {
   }
 
   async FindOrganization(orgnizationId): Promise<Organization> {
- 
     const organization = await this.orgRepo.findOne({
       where: { id: orgnizationId },
     });
@@ -73,5 +77,15 @@ export class AppService {
     });
 
     return user;
+  }
+  generateInvitationExpireTime(): Moment {
+    let duration = this.configService.get<number>(
+      ConfigConstant.invitationExpireTimeInMintues,
+    );
+    if (!duration) {
+      duration = 10;
+    }
+    const timeToExpire = moment().add(duration, 'minutes');
+    return timeToExpire;
   }
 }

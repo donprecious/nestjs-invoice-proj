@@ -1,5 +1,4 @@
-
-export const statusConstant = { 
-  active: "active",
-  inactive: "inactive"
-}
+export const statusConstant = {
+  active: 'active',
+  inactive: 'inactive',
+};

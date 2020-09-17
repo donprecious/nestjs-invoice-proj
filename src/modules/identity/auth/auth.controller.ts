@@ -38,6 +38,7 @@ import { Timestamp } from 'typeorm';
 import { async } from 'rxjs/internal/scheduler/async';
 import { JwtAuthGuard } from './jwtauth.guard';
 import { getTemplate } from 'src/providers/EmailTemplate/welcome';
+import { statusConstant } from 'src/shared/constants/StatusConstant';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -78,6 +79,7 @@ export class AuthController {
     findUser.passwordHash = hashedPassword;
     findUser.otp = null;
     findUser.otpExpiresIn = null;
+    findUser.status = statusConstant.active;
     this.userRepo.update(findUser.id, findUser);
 
     return AppResponse.OkSuccess(detail, 'user activated');
