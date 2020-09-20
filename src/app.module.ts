@@ -20,6 +20,8 @@ import { InvoiceModule } from './modules/invoice/invoice.module';
 import { AppService } from './services/app/app.service';
 import { TerminusModule } from '@nestjs/terminus/dist/terminus.module';
 import { HealthController } from './health/health.controller';
+import { TransactionModule } from './modules/transaction/transaction.module';
+import { TransactionService } from './services/transaction/transaction.service';
 
 @Module({
   imports: [
@@ -46,6 +48,7 @@ import { HealthController } from './health/health.controller';
     IdentityModule,
     InvoiceModule,
     TerminusModule,
+    TransactionModule,
   ],
   controllers: [HealthController],
   providers: [
@@ -54,6 +57,7 @@ import { HealthController } from './health/health.controller';
     AppConfigService,
     AuthService,
     EmailService,
+    TransactionService,
   ],
 })
 export class AppModule implements NestModule {

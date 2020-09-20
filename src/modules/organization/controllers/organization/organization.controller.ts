@@ -404,16 +404,9 @@ export class OrganizationController {
   @AllowPermissions(BuyerPermissions.viewSuppliers)
   @Get('suppliers/buyer/:buyerId')
   async mySupplier(@Param('buyerId') buyerId: string) {
-    const buyerOrg = await this.orgService.findOne({ where: { id: buyerId } });
-    if (!buyerOrg) {
-      throw new NotFoundException(AppResponse.NotFound('buer not found'));
-    }
-    const orgInvite = await this.orgInvite.find({
-      where: { invitedByOrganization: buyerOrg },
-      relations: ['inviteeOrganization', 'invitedByOrganization'],
+    const suppliers = await this.orgService.find({
+      where: { parentId: buyerId },
     });
-
-    const suppliers = orgInvite.map(a => a.inviteeOrganization);
     return AppResponse.OkSuccess(suppliers);
   }
 
@@ -446,19 +439,11 @@ export class OrganizationController {
   //get all buyers a supplier belongs to
   @Get('buyers/supplier/:supplierId')
   async GetBuyerSupplier(@Param('supplierId') supplierId: string) {
-    const supplier = await this.orgService.findOne({
-      where: { id: supplierId },
-    });
-    if (!supplier) {
-      throw new NotFoundException(AppResponse.NotFound('supplier not found'));
-    }
-    const orgInvite = await this.orgInvite.find({
-      where: { inviteeOrganization: supplier },
-      relations: ['inviteeOrganization', 'invitedByOrganization'],
+    const buyers = await this.orgService.find({
+      where: { parentId: supplierId },
     });
 
-    const suppliers = orgInvite.map(a => a.inviteeOrganization);
-    return AppResponse.OkSuccess(suppliers);
+    return AppResponse.OkSuccess(buyers);
   }
 
   @ApiHeader({

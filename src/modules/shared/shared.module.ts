@@ -5,7 +5,6 @@ import { RoleRepository } from './../../services/role/roleService';
 import {
   OrganizationInviteRepository,
   InvitationRepository,
- 
 } from './../../services/organization/organizationService';
 
 import { HttpModule, Module } from '@nestjs/common';
@@ -16,18 +15,18 @@ import { JwtStrategy } from '../identity/jwt.strategy';
 import { JwtAuthGuard } from '../identity/auth/jwtauth.guard';
 import { MulterModule } from '@nestjs/platform-express/multer/multer.module';
 import { AppService } from 'src/services/app/app.service';
+import { BankTransactionRepository } from 'src/services/transaction/transaction.service';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       OrganizationRepository,
       UserRepository,
-
       RoleRepository,
-
       OrganizationInviteRepository,
       InvitationRepository,
       InvoiceRepository,
+      BankTransactionRepository,
     ]),
     HttpModule,
     ConfigModule,
