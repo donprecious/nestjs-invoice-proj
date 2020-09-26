@@ -1,5 +1,9 @@
+import { invoiceStatus } from './../../../shared/app/invoiceStatus';
 import { organizationType } from './../../../shared/app/organizationType';
-import { InvoiceParameter } from './../../../dto/invoice/invoice.dto';
+import {
+  InvoiceParameter,
+  UpdateInvoiceDto,
+} from './../../../dto/invoice/invoice.dto';
 import { InvoicePermissions } from './../../../shared/app/permissionsType';
 import {
   supplier,
@@ -15,7 +19,10 @@ import { invoiceExcelSchema } from './../invoiceExcelSchema';
 
 import { AppResponse } from 'src/shared/helpers/appresponse';
 import { OrganizationRepository } from 'src/services/organization/organizationService';
-import { InvoiceRepository } from './../../../services/invoice/invoice';
+import {
+  InvoiceRepository,
+  InvoiceService,
+} from './../../../services/invoice/invoice';
 import { Invoice } from './../../../entities/invoice.entity';
 import readXlsxFile = require('read-excel-file/node');
 import * as _ from 'lodash';
@@ -41,8 +48,10 @@ import {
   Body,
   Controller,
   Get,
+  NotFoundException,
   Param,
   Post,
+  Put,
   Query,
   Request,
   UnauthorizedException,
@@ -76,6 +85,7 @@ export class InvoiceController {
     private invoiceRepo: InvoiceRepository,
     private orgRepo: OrganizationRepository,
     private appService: AppService,
+    private invoiceService: InvoiceService,
   ) {}
 
   @ApiHeader({
@@ -163,7 +173,12 @@ export class InvoiceController {
       invoices.push(invoice);
     }
     this.invoiceRepo.save(invoices);
-
+    for (const invoice of invoices) {
+      await this.invoiceService.ComputeInvoiceDiscount(
+        invoice.id,
+        invoice.status,
+      );
+    }
     return AppResponse.OkSuccess(createInvoices);
   }
 
@@ -283,7 +298,12 @@ export class InvoiceController {
       invoices.push(invoice);
     }
     this.invoiceRepo.save(invoices);
-
+    for (const invoice of invoices) {
+      await this.invoiceService.ComputeInvoiceDiscount(
+        invoice.id,
+        invoice.status,
+      );
+    }
     return AppResponse.OkSuccess(invoices);
   }
 
@@ -517,6 +537,62 @@ export class InvoiceController {
     if (!invoice) {
       throw new BadRequestException(AppResponse.badRequest('No Invoice Found'));
     }
+    return AppResponse.OkSuccess(invoice);
+  }
+
+  @Put(':invoiceId')
+  async UpdateInvoice(
+    @Param('invoiceId') invoiceId: string,
+    @Body() updateInvoiceDto: UpdateInvoiceDto,
+  ) {
+    const invoice = await this.invoiceRepo.findOne({
+      where: { id: invoiceId },
+    });
+    if (!invoice) {
+      throw new NotFoundException(AppResponse.NotFound('invoice not found'));
+    }
+    invoice.amount = updateInvoiceDto.amount;
+    invoice.invoiceNumber = updateInvoiceDto.invoiceNumber;
+    invoice.currencyCode = updateInvoiceDto.currencyCode;
+    invoice.dueDate = updateInvoiceDto.dueDate;
+    // invoice.discountAmount = updateInvoiceDto.discountAmount;
+    invoice.paymentDate = updateInvoiceDto.paymentDate;
+    invoice.paymentReference = updateInvoiceDto.paymentReference;
+    invoice.status = updateInvoiceDto.status;
+    if (updateInvoiceDto.status == invoiceStatus.paid) {
+      if (!updateInvoiceDto.paymentDate) {
+        invoice.paymentDate = moment().toDate();
+      } else {
+        if (moment(invoice.createdOn).isAfter(updateInvoiceDto.paymentDate)) {
+          throw new BadRequestException(
+            AppResponse.badRequest(
+              'payment date should be  greater than invoice created date',
+            ),
+          );
+        }
+        if (moment(updateInvoiceDto.paymentDate).isAfter(invoice.dueDate)) {
+          throw new BadRequestException(
+            AppResponse.badRequest(
+              'payment date should be below invoice due date',
+            ),
+          );
+        }
+      }
+    }
+    if (updateInvoiceDto.dueDate) {
+      if (moment(updateInvoiceDto.dueDate).isBefore(invoice.createdOn)) {
+        throw new BadRequestException(
+          AppResponse.badRequest(
+            'due date should be above invoice creation date',
+          ),
+        );
+      }
+    }
+    await this.invoiceRepo.update(invoice.id, invoice);
+    await this.invoiceService.ComputeInvoiceDiscount(
+      invoice.id,
+      invoice.status,
+    );
     return AppResponse.OkSuccess(invoice);
   }
 }
