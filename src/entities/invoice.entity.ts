@@ -25,6 +25,9 @@ export class Invoice extends BaseEntity {
   @Column({ type: 'timestamp', nullable: true })
   paymentDate: Date;
 
+  @Column({ nullable: true, default: 'pending' })
+  status: string;
+
   @ManyToOne(type => Organization)
   createdForOrganization: Organization;
 

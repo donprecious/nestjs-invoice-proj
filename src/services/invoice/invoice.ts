@@ -2,21 +2,15 @@ import { Organization } from './../../entities/organization.entity';
 import { Invoice } from './../../entities/invoice.entity';
 
 import { Repository, EntityRepository, FindConditions, Not } from 'typeorm';
-import {
-  IPaginationOptions,
-  paginate,
-  Pagination,
-} from 'nestjs-typeorm-paginate';
 import { OrganizationTypeEnum } from 'src/shared/app/organizationType';
 import * as _ from 'lodash';
+import { invoiceStatus } from 'src/shared/app/invoiceStatus';
+import moment = require('moment');
+import { Injectable } from '@nestjs/common';
 @EntityRepository(Invoice)
 export class InvoiceRepository extends Repository<Invoice> {
   constructor() {
     super();
-  }
-
-  async paginate(options: IPaginationOptions): Promise<Pagination<Invoice>> {
-    return paginate<Invoice>(this, options);
   }
 
   async GetInvoiceOverview(
@@ -58,5 +52,41 @@ export class InvoiceRepository extends Repository<Invoice> {
       numberOfInvoice: count,
     };
     return res;
+  }
+}
+
+@Injectable()
+export class InvoiceService {
+  constructor(private invoiceRepo: InvoiceRepository) {}
+
+  async ComputeInvoiceDiscount(invoiceId, status: string) {
+    const invoice = await this.invoiceRepo.findOne({
+      where: { id: invoiceId },
+      relations: ['createdByOrganization', 'createdForOrganization'],
+    });
+    if (!invoice) return;
+
+    const buyer = invoice.createdByOrganization;
+    const supplier = invoice.createdForOrganization;
+    let daysOutstanding = 0;
+    const creationDate = moment(invoice.createdOn);
+
+    if (status == invoiceStatus.pending || status == invoiceStatus.accepted) {
+      const duration = moment
+        .duration(moment(invoice.dueDate).diff(creationDate))
+        .asDays();
+      daysOutstanding = Math.abs(duration);
+    } else {
+      const duration = moment
+        .duration(moment(invoice.paymentDate).diff(creationDate))
+        .asDays();
+      daysOutstanding = Math.abs(duration);
+    }
+    const discountAmount =
+      invoice.amount -
+      invoice.amount * (daysOutstanding / 365) * (Number(supplier.apr) / 100);
+    invoice.discountAmount = discountAmount;
+    this.invoiceRepo.update(invoice.id, invoice);
+    return invoice;
   }
 }
