@@ -190,16 +190,14 @@ export class OrganizationController {
         }
       }
     }
-
-    await this.orgRepo.update(organization.id, organization);
     if (organization.type == organizationType.supplier) {
       if (editOrg.discountRatio) {
-        await this.orgService.ComputeSupplierApr(
-          organization.id,
-          editOrg.discountRatio,
-        );
+        organization.apr = editOrg.discountRatio;
       }
     }
+
+    await this.orgRepo.update(organization.id, organization);
+    
     return AppResponse.OkSuccess(organization);
   }
 
