@@ -1,21 +1,14 @@
 import { invoiceStatus } from './../../../shared/app/invoiceStatus';
-import { organizationType } from './../../../shared/app/organizationType';
 import {
   InvoiceParameter,
   UpdateInvoiceDto,
 } from './../../../dto/invoice/invoice.dto';
 import { InvoicePermissions } from './../../../shared/app/permissionsType';
 import {
-  supplier,
-  buyer,
-} from './../../../shared/oranization/organizationType';
-import {
   PaginationQueryParam,
   PaginatedResultDto,
 } from './../../../shared/dto/pagination.dto';
 import { In } from 'typeorm/find-options/operator/In';
-import { Organization } from 'src/entities/organization.entity';
-import { invoiceExcelSchema } from './../invoiceExcelSchema';
 
 import { AppResponse } from 'src/shared/helpers/appresponse';
 import { OrganizationRepository } from 'src/services/organization/organizationService';
@@ -26,15 +19,10 @@ import {
 import { Invoice } from './../../../entities/invoice.entity';
 import readXlsxFile = require('read-excel-file/node');
 import * as _ from 'lodash';
-import {
-  paginate,
-  Pagination,
-  IPaginationOptions,
-} from 'nestjs-typeorm-paginate';
+import { ConfigService } from '@nestjs/config';
+import { ConfigConstant } from 'src/shared/constants/ConfigConstant';
 
 import {
-  CreateInvoiceDto,
-  CreateManyInvoiceBySupplierDto,
   CreateManyInvoiceDto,
   InvoiceFilter,
 } from './../../../dto/invoice/create-invoice.dto';
@@ -62,15 +50,10 @@ import {
 import { JwtAuthGuard } from 'src/modules/identity/auth/jwtauth.guard';
 import { AnyFilesInterceptor } from '@nestjs/platform-express/multer/interceptors/any-files.interceptor';
 import {
-  Any,
   Between,
-  FindConditions,
-  LessThanOrEqual,
-  MoreThanOrEqual,
+  FindConditions,  
 } from 'typeorm';
 import { AppService } from 'src/services/app/app.service';
-import { EmailService } from 'src/services/notification/email/email.service';
-import { ConfigService } from '@nestjs/config';
 import moment = require('moment');
 
 import { AllowPermissions } from 'src/shared/guards/permission.decorator';
@@ -86,6 +69,7 @@ export class InvoiceController {
     private orgRepo: OrganizationRepository,
     private appService: AppService,
     private invoiceService: InvoiceService,
+    private configService: ConfigService,
   ) {}
 
   @ApiHeader({
@@ -97,7 +81,7 @@ export class InvoiceController {
   async create(@Body() createInvoices: CreateManyInvoiceDto, @Request() req) {
     const organization = await this.appService.getOrganization();
 
-    const orgnizationId = organization.id;
+    //const orgnizationId = organization.id;
 
     // validate invoices
     const invoiceNos = createInvoices.invoices.map(a => a.invoiceNumber);
@@ -158,6 +142,8 @@ export class InvoiceController {
 
     const invoices = [] as Invoice[];
 
+    
+
     for (const row of createInvoices.invoices) {
       const invoice = {
         amount: row.amount,
@@ -173,10 +159,13 @@ export class InvoiceController {
       invoices.push(invoice);
     }
     this.invoiceRepo.save(invoices);
+
+    const buyerApr = (organization.apr > 0.0 ) ? organization.apr : this.configService.get<number>(ConfigConstant.APR);
+
     for (const invoice of invoices) {
-      await this.invoiceService.ComputeInvoiceDiscount(
+      await this.invoiceService.ComputeInvoiceDiscountAmount(
         invoice.id,
-        invoice.status,
+        invoice.status,buyerApr
       );
     }
     return AppResponse.OkSuccess(createInvoices);

@@ -59,6 +59,39 @@ export class InvoiceRepository extends Repository<Invoice> {
 export class InvoiceService {
   constructor(private invoiceRepo: InvoiceRepository) {}
 
+  async ComputeInvoiceDiscountAmount(invoiceId, status: string , buyerApr : number) {
+    const invoice = await this.invoiceRepo.findOne({
+      where: { id: invoiceId },
+      relations: ['createdByOrganization', 'createdForOrganization'],
+    });
+    if (!invoice) return;
+    
+    const supplier = invoice.createdForOrganization;
+
+    const supplierApr = (supplier.apr > 0 ) ?  (buyerApr - ( (supplier.apr/100) * buyerApr ) ) : buyerApr ; 
+
+    let daysOutstanding = 0;
+    const creationDate = moment(invoice.createdOn);
+
+    if (status == invoiceStatus.pending || status == invoiceStatus.accepted) {
+      const duration = moment
+        .duration(moment(invoice.dueDate).diff(creationDate))
+        .asDays();
+      daysOutstanding = Math.abs(duration);
+    } else {
+      const duration = moment
+        .duration(moment(invoice.dueDate).diff(moment(invoice.paymentDate)))
+        .asDays();
+      daysOutstanding = Math.abs(duration);
+    }
+    const discountAmount =
+      invoice.amount -
+      (invoice.amount * (daysOutstanding / 365) * (supplierApr / 100));
+    invoice.discountAmount = discountAmount;
+    this.invoiceRepo.update(invoice.id, invoice);
+    return invoice;
+  }
+  
   async ComputeInvoiceDiscount(invoiceId, status: string) {
     const invoice = await this.invoiceRepo.findOne({
       where: { id: invoiceId },
