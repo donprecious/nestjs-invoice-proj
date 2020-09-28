@@ -59,6 +59,7 @@ import moment = require('moment');
 import { AllowPermissions } from 'src/shared/guards/permission.decorator';
 import { RolePermissionGuard } from 'src/shared/guards/role-permission.guard';
 import { OrganizationTypeEnum } from 'src/shared/app/organizationType';
+import { invoiceExcelSchema } from './../invoiceExcelSchema';
 
 @UseGuards(JwtAuthGuard, RolePermissionGuard)
 @ApiTags('invoice')
