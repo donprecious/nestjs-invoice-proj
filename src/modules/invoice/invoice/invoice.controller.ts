@@ -165,8 +165,8 @@ export class InvoiceController {
 
     for (const invoice of invoices) {
       await this.invoiceService.ComputeInvoiceDiscountAmount(
-        invoice.id,
-        invoice.status,buyerApr
+        invoice.invoiceNumber,
+        invoice.status,buyerApr,organization
       );
     }
     return AppResponse.OkSuccess(createInvoices);
