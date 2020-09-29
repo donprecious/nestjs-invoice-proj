@@ -294,8 +294,8 @@ export class InvoiceController {
     for (const invoice of invoices) {
       console.log( " processing discount for invoice id"+ invoice.invoiceNumber);
       await this.invoiceService.ComputeInvoiceDiscountAmount(
-        invoice.id,
-        invoice.status,buyerApr
+        invoice.invoiceNumber,
+        invoice.status,buyerApr,organization
       );
     }
     return AppResponse.OkSuccess(invoices);

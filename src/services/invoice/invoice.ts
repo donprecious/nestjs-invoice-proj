@@ -59,9 +59,9 @@ export class InvoiceRepository extends Repository<Invoice> {
 export class InvoiceService {
   constructor(private invoiceRepo: InvoiceRepository) {}
 
-  async ComputeInvoiceDiscountAmount(invoiceId, status: string , buyerApr : number) {
+  async ComputeInvoiceDiscountAmount(invoiceNumber: string, status: string , buyerApr : number, buyer : Organization) {
     const invoice = await this.invoiceRepo.findOne({
-      where: { id: invoiceId },
+      where: { invoiceNumber: invoiceNumber , createdByOrganization : buyer },
       relations: ['createdByOrganization', 'createdForOrganization'],
     });
     if (!invoice) return;
