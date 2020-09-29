@@ -88,6 +88,7 @@ export class InvoiceService {
       invoice.amount -
       (invoice.amount * (daysOutstanding / 365) * (supplierApr / 100));
     invoice.discountAmount = discountAmount;
+    console.log("computed discount amout is "+discountAmount + " with duration "+ daysOutstanding );
     this.invoiceRepo.update(invoice.id, invoice);
     return invoice;
   }
