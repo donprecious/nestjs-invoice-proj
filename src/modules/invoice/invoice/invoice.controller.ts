@@ -153,6 +153,7 @@ export class InvoiceController {
         dueDate: row.dueDate,
         discountAmount: 0.95 * row.amount,
         createdByOrganization: organization,
+        status:invoiceStatus.accepted,
         createdForOrganization: uniqueOrganizations.find(
           a => a.code == row.supplierCode,
         ),
@@ -280,6 +281,7 @@ export class InvoiceController {
         invoiceNumber: row.invoiceNo,
         currencyCode: row.currencyCode,
         dueDate: row.dueDate,
+        status:invoiceStatus.accepted,
         createdByOrganization: organization,
         createdForOrganization: uniqueOrganizations.find(
           a => a.code == row.supplierCode,
