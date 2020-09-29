@@ -287,7 +287,7 @@ export class InvoiceController {
       } as Invoice;
       invoices.push(invoice);
     }
-    this.invoiceRepo.save(invoices);
+    await this.invoiceRepo.save(invoices);
 
     const buyerApr = (organization.apr > 0.0 ) ? organization.apr : this.configService.get<number>(ConfigConstant.APR);
 

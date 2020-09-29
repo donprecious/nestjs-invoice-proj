@@ -64,7 +64,11 @@ export class InvoiceService {
       where: { invoiceNumber: invoiceNumber , createdByOrganization : buyer },
       relations: ['createdByOrganization', 'createdForOrganization'],
     });
-    if (!invoice) return;
+    if (!invoice) {
+     console.log("invoice not found");
+      return
+      
+    };
     
     const supplier = invoice.createdForOrganization;
 
