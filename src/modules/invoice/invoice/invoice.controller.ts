@@ -292,6 +292,7 @@ export class InvoiceController {
     const buyerApr = (organization.apr > 0.0 ) ? organization.apr : this.configService.get<number>(ConfigConstant.APR);
 
     for (const invoice of invoices) {
+      console.log( " processing discount for invoice id"+ invoice.invoiceNumber);
       await this.invoiceService.ComputeInvoiceDiscountAmount(
         invoice.id,
         invoice.status,buyerApr
