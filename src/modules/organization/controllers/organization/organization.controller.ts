@@ -58,10 +58,8 @@ import { EmailService } from 'src/services/notification/email/email.service';
 import { ConfigConstant } from 'src/shared/constants/ConfigConstant';
 import { EmailDto } from 'src/shared/dto/emailDto';
 import { JwtAuthGuard } from 'src/modules/identity/auth/jwtauth.guard';
-import moment = require('moment');
 import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception';
-import { String } from 'lodash';
-import { PromiseUtils, FindConditions, Like } from 'typeorm';
+import {  FindConditions, Like } from 'typeorm';
 import { GetRoleDto } from 'src/dto/role/role.dto';
 import { OrganizationService } from 'src/services/organization/organization.services';
 @UseGuards(JwtAuthGuard, RolePermissionGuard)

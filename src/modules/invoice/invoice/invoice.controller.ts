@@ -2,6 +2,7 @@ import { invoiceStatus } from './../../../shared/app/invoiceStatus';
 import {
   InvoiceParameter,
   UpdateInvoiceDto,
+  UpdateInvoicePaymentDate,
 } from './../../../dto/invoice/invoice.dto';
 import { InvoicePermissions } from './../../../shared/app/permissionsType';
 import {
@@ -536,10 +537,10 @@ export class InvoiceController {
     return AppResponse.OkSuccess(invoice);
   }
 
-  @Put(':invoiceId')
-  async UpdateInvoice(
+  @Put('payment/:invoiceId')
+  async UpdateInvoicePaymentDate(
     @Param('invoiceId') invoiceId: string,
-    @Body() updateInvoiceDto: UpdateInvoiceDto,
+    @Body() updatePaymentDate: UpdateInvoicePaymentDate,
   ) {
     const invoice = await this.invoiceRepo.findOne({
       where: { id: invoiceId },
@@ -547,48 +548,38 @@ export class InvoiceController {
     if (!invoice) {
       throw new NotFoundException(AppResponse.NotFound('invoice not found'));
     }
-    invoice.amount = updateInvoiceDto.amount;
-    invoice.invoiceNumber = updateInvoiceDto.invoiceNumber;
-    invoice.currencyCode = updateInvoiceDto.currencyCode;
-    invoice.dueDate = updateInvoiceDto.dueDate;
-    // invoice.discountAmount = updateInvoiceDto.discountAmount;
-    invoice.paymentDate = updateInvoiceDto.paymentDate;
-    invoice.paymentReference = updateInvoiceDto.paymentReference;
-    invoice.status = updateInvoiceDto.status;
-    if (updateInvoiceDto.status == invoiceStatus.paid) {
-      if (!updateInvoiceDto.paymentDate) {
+
+    invoice.paymentReference = updatePaymentDate.paymentReference;
+    invoice.status = invoiceStatus.paid;    
+    
+    if (!updatePaymentDate.paymentDate) {
         invoice.paymentDate = moment().toDate();
-      } else {
-        if (moment(invoice.createdOn).isAfter(updateInvoiceDto.paymentDate)) {
+    } else {
+        if (moment(invoice.createdOn).isAfter(updatePaymentDate.paymentDate)) {
           throw new BadRequestException(
             AppResponse.badRequest(
               'payment date should be  greater than invoice created date',
             ),
           );
         }
-        if (moment(updateInvoiceDto.paymentDate).isAfter(invoice.dueDate)) {
+        if (moment(updatePaymentDate.paymentDate).isAfter(invoice.dueDate)) {
           throw new BadRequestException(
             AppResponse.badRequest(
               'payment date should be below invoice due date',
             ),
           );
         }
-      }
-    }
-    if (updateInvoiceDto.dueDate) {
-      if (moment(updateInvoiceDto.dueDate).isBefore(invoice.createdOn)) {
-        throw new BadRequestException(
-          AppResponse.badRequest(
-            'due date should be above invoice creation date',
-          ),
-        );
-      }
-    }
+        invoice.paymentDate = updatePaymentDate.paymentDate;
+    }    
+    
     await this.invoiceRepo.update(invoice.id, invoice);
-    await this.invoiceService.ComputeInvoiceDiscount(
-      invoice.id,
-      invoice.status,
+    const buyerApr = (invoice.createdByOrganization.apr > 0.0 ) ? invoice.createdByOrganization.apr : this.configService.get<number>(ConfigConstant.APR);
+    await this.invoiceService.ComputeInvoiceDiscountAmount(
+      invoice.invoiceNumber,
+      invoice.status,buyerApr,invoice.createdByOrganization
     );
     return AppResponse.OkSuccess(invoice);
   }
+
+  
 }
