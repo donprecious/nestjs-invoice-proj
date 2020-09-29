@@ -276,7 +276,7 @@ export class InvoiceController {
     for (const row of result.rows) {
       const invoice = {
         amount: row.amount,
-        discountAmount: 0.95 * row.amount,
+        discountAmount: 0.90 * row.amount,
         invoiceNumber: row.invoiceNo,
         currencyCode: row.currencyCode,
         dueDate: row.dueDate,
@@ -288,10 +288,13 @@ export class InvoiceController {
       invoices.push(invoice);
     }
     this.invoiceRepo.save(invoices);
+
+    const buyerApr = (organization.apr > 0.0 ) ? organization.apr : this.configService.get<number>(ConfigConstant.APR);
+
     for (const invoice of invoices) {
-      await this.invoiceService.ComputeInvoiceDiscount(
+      await this.invoiceService.ComputeInvoiceDiscountAmount(
         invoice.id,
-        invoice.status,
+        invoice.status,buyerApr
       );
     }
     return AppResponse.OkSuccess(invoices);
