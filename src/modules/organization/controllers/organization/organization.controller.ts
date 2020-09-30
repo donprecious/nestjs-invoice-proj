@@ -59,7 +59,7 @@ import { ConfigConstant } from 'src/shared/constants/ConfigConstant';
 import { EmailDto } from 'src/shared/dto/emailDto';
 import { JwtAuthGuard } from 'src/modules/identity/auth/jwtauth.guard';
 import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception';
-import {  FindConditions, Like } from 'typeorm';
+import { FindConditions, Like } from 'typeorm';
 import { GetRoleDto } from 'src/dto/role/role.dto';
 import { OrganizationService } from 'src/services/organization/organization.services';
 @UseGuards(JwtAuthGuard, RolePermissionGuard)
@@ -108,8 +108,10 @@ export class OrganizationController {
         ),
       );
     }
+    if (org.type == organizationType.supplier) {
+      org.parentId = organization.id;
+    }
 
-    org.parentId = organization.id;
     if (org.type == organizationType.buyer) {
       if (createOrg.apr) {
         org.apr = createOrg.apr;
@@ -195,7 +197,7 @@ export class OrganizationController {
     }
 
     await this.orgRepo.update(organization.id, organization);
-    
+
     return AppResponse.OkSuccess(organization);
   }
 
@@ -469,9 +471,15 @@ export class OrganizationController {
 
   @AllowPermissions(BuyerPermissions.listBuyer)
   @Get('buyers')
-  async GetBuyers() {
+  async GetBuyers(@Query() filters: OrganizationFilter) {
+    const where: FindConditions<Organization> = {
+      type: organizationType.buyer,
+    };
+    if (filters.search) {
+      where.name = Like(`%${filters.search}%`);
+    }
     const buyers = await this.orgRepo.find({
-      where: { type: organizationType.buyer },
+      where: where,
     });
     return AppResponse.OkSuccess(buyers);
   }

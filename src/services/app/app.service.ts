@@ -1,3 +1,4 @@
+import { Role } from './../../entities/Role.entity';
 import { UserRepository } from './../user/userService';
 import { User } from './../../entities/User.entity';
 import { JwtPayloadDto } from './../../shared/dto/jwt.dto';
@@ -78,6 +79,20 @@ export class AppService {
 
     return user;
   }
+
+  async getCurrentUserRole(): Promise<Role> {
+    const loggedUser = this.getLoggedUser();
+    if (!loggedUser) {
+      console.log('no logged in user found');
+      return null;
+    }
+    const user = await this.userRepo.findOne({
+      where: { id: loggedUser.userId },
+      relations: ['role'],
+    });
+    return user.role;
+  }
+
   generateInvitationExpireTime(): Moment {
     let duration = this.configService.get<number>(
       ConfigConstant.invitationExpireTimeInMintues,
