@@ -573,7 +573,7 @@ export class InvoiceController {
     }    
     
     await this.invoiceRepo.update(invoice.id, invoice);
-    const buyerApr = (invoice.createdByOrganization.apr > 0.0 ) ? invoice.createdByOrganization.apr : this.configService.get<number>(ConfigConstant.APR);
+    const buyerApr = (invoice.createdByOrganization.apr) ? invoice.createdByOrganization.apr : this.configService.get<number>(ConfigConstant.APR);
     await this.invoiceService.ComputeInvoiceDiscountAmount(
       invoice.invoiceNumber,
       invoice.status,buyerApr,invoice.createdByOrganization
