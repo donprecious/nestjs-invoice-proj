@@ -8,13 +8,13 @@ export enum BuyerPermissions {
   addBuyerUser = 'Add_Buyer_User', // post /api/scf/organization/add-user
 }
 export enum SupplierPermissions {
-  createSuppier = 'Create_Suppier', // post /organization , post /organization/user
-  editSuppier = 'Edit_Suppier', // put /organization/:orgId
-  viewSuppier = 'View_Suppier', // get /organization/:orgId
-  listSuppier = 'List_Suppier', // get /organization
-  deleteSuppier = 'Delete_Suppier', //delete /organization/:orgId
+  createSuppier = 'Create_Supplier', // post /organization , post /organization/user
+  editSuppier = 'Edit_Supplier', // put /organization/:orgId
+  viewSuppier = 'View_Supplier', // get /organization/:orgId
+  listSuppier = 'List_Supplier', // get /organization
+  deleteSuppier = 'Delete_Supplier', //delete /organization/:orgId
   viewBuyers = 'View_Own_Buyer', // get /api/scf/organization/buyers/supplier/{supplierId}
-  addSupplierUser = 'Add_Suppier_User', // post /api/scf/organization/add-user
+  addSupplierUser = 'Add_Supplier_User', // post /api/scf/organization/add-user
 }
 
 export enum InvoicePermissions {

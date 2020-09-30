@@ -36,14 +36,13 @@ export class InvoiceParameter {
   ])
   type: OrganizationTypeEnum;
   value: string;
+  dateFilter: string;
 }
 
 export class UpdateInvoicePaymentDate {
-  
   paymentReference: string;
 
   paymentDate: Date;
-  
 }
 
 export class UpdateInvoiceDto {

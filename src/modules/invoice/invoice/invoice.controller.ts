@@ -50,10 +50,7 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/modules/identity/auth/jwtauth.guard';
 import { AnyFilesInterceptor } from '@nestjs/platform-express/multer/interceptors/any-files.interceptor';
-import {
-  Between,
-  FindConditions,  
-} from 'typeorm';
+import { Between, FindConditions } from 'typeorm';
 import { AppService } from 'src/services/app/app.service';
 import moment = require('moment');
 
@@ -144,8 +141,6 @@ export class InvoiceController {
 
     const invoices = [] as Invoice[];
 
-    
-
     for (const row of createInvoices.invoices) {
       const invoice = {
         amount: row.amount,
@@ -154,7 +149,7 @@ export class InvoiceController {
         dueDate: row.dueDate,
         discountAmount: 0.95 * row.amount,
         createdByOrganization: organization,
-        status:invoiceStatus.accepted,
+        status: invoiceStatus.accepted,
         createdForOrganization: uniqueOrganizations.find(
           a => a.code == row.supplierCode,
         ),
@@ -163,12 +158,17 @@ export class InvoiceController {
     }
     this.invoiceRepo.save(invoices);
 
-    const buyerApr = (organization.apr > 0.0 ) ? organization.apr : this.configService.get<number>(ConfigConstant.APR);
+    const buyerApr =
+      organization.apr > 0.0
+        ? organization.apr
+        : this.configService.get<number>(ConfigConstant.APR);
 
     for (const invoice of invoices) {
       await this.invoiceService.ComputeInvoiceDiscountAmount(
         invoice.invoiceNumber,
-        invoice.status,buyerApr,organization
+        invoice.status,
+        buyerApr,
+        organization,
       );
     }
     return AppResponse.OkSuccess(createInvoices);
@@ -278,11 +278,11 @@ export class InvoiceController {
     for (const row of result.rows) {
       const invoice = {
         amount: row.amount,
-        discountAmount: 0.90 * row.amount,
+        discountAmount: 0.9 * row.amount,
         invoiceNumber: row.invoiceNo,
         currencyCode: row.currencyCode,
         dueDate: row.dueDate,
-        status:invoiceStatus.accepted,
+        status: invoiceStatus.accepted,
         createdByOrganization: organization,
         createdForOrganization: uniqueOrganizations.find(
           a => a.code == row.supplierCode,
@@ -292,13 +292,20 @@ export class InvoiceController {
     }
     await this.invoiceRepo.save(invoices);
 
-    const buyerApr = (organization.apr > 0.0 ) ? organization.apr : this.configService.get<number>(ConfigConstant.APR);
+    const buyerApr =
+      organization.apr > 0.0
+        ? organization.apr
+        : this.configService.get<number>(ConfigConstant.APR);
 
     for (const invoice of invoices) {
-      console.log( " processing discount for invoice id"+ invoice.invoiceNumber);
+      console.log(
+        ' processing discount for invoice id' + invoice.invoiceNumber,
+      );
       await this.invoiceService.ComputeInvoiceDiscountAmount(
         invoice.invoiceNumber,
-        invoice.status,buyerApr,organization
+        invoice.status,
+        buyerApr,
+        organization,
       );
     }
     return AppResponse.OkSuccess(invoices);
@@ -520,6 +527,7 @@ export class InvoiceController {
     const result = await this.invoiceRepo.GetInvoiceOverview(
       param.type,
       organization,
+      param.dateFilter,
     );
     return AppResponse.OkSuccess(result);
   }
@@ -550,36 +558,40 @@ export class InvoiceController {
     }
 
     invoice.paymentReference = updatePaymentDate.paymentReference;
-    invoice.status = invoiceStatus.paid;    
-    
+    invoice.status = invoiceStatus.paid;
+
     if (!updatePaymentDate.paymentDate) {
-        invoice.paymentDate = moment().toDate();
+      invoice.paymentDate = moment().toDate();
     } else {
-        if (moment(invoice.createdOn).isAfter(updatePaymentDate.paymentDate)) {
-          throw new BadRequestException(
-            AppResponse.badRequest(
-              'payment date should be  greater than invoice created date',
-            ),
-          );
-        }
-        if (moment(updatePaymentDate.paymentDate).isAfter(invoice.dueDate)) {
-          throw new BadRequestException(
-            AppResponse.badRequest(
-              'payment date should be below invoice due date',
-            ),
-          );
-        }
-        invoice.paymentDate = updatePaymentDate.paymentDate;
-    }    
-    
+      if (moment(invoice.createdOn).isAfter(updatePaymentDate.paymentDate)) {
+        throw new BadRequestException(
+          AppResponse.badRequest(
+            'payment date should be  greater than invoice created date',
+          ),
+        );
+      }
+      if (moment(updatePaymentDate.paymentDate).isAfter(invoice.dueDate)) {
+        throw new BadRequestException(
+          AppResponse.badRequest(
+            'payment date should be below invoice due date',
+          ),
+        );
+      }
+      invoice.paymentDate = updatePaymentDate.paymentDate;
+    }
+
     await this.invoiceRepo.update(invoice.id, invoice);
-    const buyerApr = (invoice.createdByOrganization.apr) ? invoice.createdByOrganization.apr : this.configService.get<number>(ConfigConstant.APR);
+
+    const buyerApr =
+      (invoice.createdByOrganization.apr)
+        ? invoice.createdByOrganization.apr
+        : this.configService.get<number>(ConfigConstant.APR);
     await this.invoiceService.ComputeInvoiceDiscountAmount(
       invoice.invoiceNumber,
-      invoice.status,buyerApr,invoice.createdByOrganization
+      invoice.status,
+      buyerApr,
+      invoice.createdByOrganization,
     );
     return AppResponse.OkSuccess(invoice);
   }
-
-  
 }
