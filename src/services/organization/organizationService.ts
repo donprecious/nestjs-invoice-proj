@@ -2,6 +2,7 @@ import { Invitation } from './../../entities/Invitations.entity';
 import { OrganizationInvite } from './../../entities/organizationInvite.entity';
 
 import { Organization } from './../../entities/organization.entity';
+import { OkraCallback} from './../../entities/callback.entity';
 import { Repository, EntityRepository } from 'typeorm';
 import moment = require('moment');
 import { ConfigService } from '@nestjs/config';
@@ -25,3 +26,6 @@ export class InvitationRepository extends Repository<Invitation> {
     super();
   }
 }
+
+@EntityRepository(OkraCallback)
+export class OkraCallbackRepository extends Repository<OkraCallback> {}

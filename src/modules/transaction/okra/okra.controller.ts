@@ -1,4 +1,4 @@
-import { Controller, Get, HttpService, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpService, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiTags } from '@nestjs/swagger';
 import { BankTransactions } from 'src/entities/banktransaction.entity';
@@ -6,6 +6,7 @@ import { OrganizationRepository } from 'src/services/organization/organizationSe
 import { BankTransactionRepository } from 'src/services/transaction/transaction.service';
 import { ConfigConstant } from 'src/shared/constants/ConfigConstant';
 import { AppResponse } from 'src/shared/helpers/appresponse';
+import { OkraService } from '../okra.service';
 
 @Controller('okra')
 @ApiTags('okra')
@@ -18,6 +19,7 @@ export class OkraController {
     private httpService: HttpService,
     private config: ConfigService,
     private orgRep: OrganizationRepository,
+    private okraService: OkraService
   ) {}
   @Get('callback')
   async callBack(
@@ -51,5 +53,23 @@ export class OkraController {
       await this.bankTransactionRepo.save(okraData);
     }
     return AppResponse.OkSuccess(okraData);
+  }
+
+  @Post('callback')
+  okraCallback(
+    @Param('organizationID') organizationId: string,
+    @Body('method') method: string,
+    @Body('callback_url') callbackUrl: string,
+    @Body('callback_code') callbackCode: string,
+    @Body('record') record: string
+    ): any{
+    this.okraService.okraCallback(
+      organizationId,
+      method,
+      callbackUrl,
+      callbackCode,
+      record
+      );
+      return AppResponse.OkSuccess({})
   }
 }
