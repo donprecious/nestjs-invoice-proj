@@ -586,9 +586,10 @@ export class InvoiceController {
     
 
     const buyerApr =
-      (invoice.createdByOrganization.apr == null )
+      (invoice.createdByOrganization?.apr == null )
         ? this.configService.get<number>(ConfigConstant.APR) 
-        : invoice.createdByOrganization.apr;
+        : invoice.createdByOrganization?.apr;
+
     await this.invoiceService.ComputeInvoiceDiscountAmount(
       invoice.invoiceNumber,
       invoice.status,
