@@ -1,4 +1,4 @@
-FROM node:10
+FROM node:10.22.0-alpine3.11
 WORKDIR /app
 COPY ./package.json ./
 COPY ./run.sh ./
