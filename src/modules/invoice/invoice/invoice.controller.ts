@@ -551,7 +551,8 @@ export class InvoiceController {
     @Body() updatePaymentDate: UpdateInvoicePaymentDate,
   ) {
     const invoice = await this.invoiceRepo.findOne({
-      where: { id: invoiceId },
+      where: { id: invoiceId },      
+      relations: ['createdByOrganization'],
     });
     if (!invoice) {
       throw new NotFoundException(AppResponse.NotFound('invoice not found'));
