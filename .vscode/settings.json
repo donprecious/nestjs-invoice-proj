@@ -1,3 +1,4 @@
 {
-    "npm.enableRunFromFolder": true
+    "npm.enableRunFromFolder": true,
+    "debug.javascript.warnOnLongPrediction": false
 }

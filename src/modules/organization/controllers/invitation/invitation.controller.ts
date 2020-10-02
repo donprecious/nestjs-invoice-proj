@@ -13,7 +13,10 @@ import { AppResponse } from './../../../../shared/helpers/appresponse';
 import { UserDto } from './../../../../dto/user/user.dto';
 import { OrganizationDto } from './../../../../dto/organization/organization.dto';
 import { roleTypes } from './../../../../shared/app/roleTypes';
-import { InvitationRepository } from './../../../../services/organization/organizationService';
+import {
+  InvitationRepository,
+  OrganizationInviteRepository,
+} from './../../../../services/organization/organizationService';
 import {
   BadRequestException,
   Controller,
@@ -53,6 +56,7 @@ export class InvitationController {
   constructor(
     private invitationRepo: InvitationRepository,
     private orgRepo: OrganizationRepository,
+    private orgInviteRepo: OrganizationInviteRepository,
     private userRepo: UserRepository,
     private emailSerice: EmailService,
     private configService: ConfigService,
@@ -161,6 +165,12 @@ export class InvitationController {
 
     invite.status = updateStatus.status;
     await this.invitationRepo.update(invite.id, invite);
+    const organization = invite.organization;
+    const organizationInvite = await this.orgInviteRepo.findOne({
+      where: { inviteeOrganization: organization },
+    });
+    organizationInvite.status = updateStatus.status;
+    await this.orgInviteRepo.update(organizationInvite.id, organizationInvite);
     if (updateStatus.status == invitationStatus.accepted) {
       const message = `Invitation Accepted! , Activate your account with this Otp : <b>${otp}</b>
       `;
