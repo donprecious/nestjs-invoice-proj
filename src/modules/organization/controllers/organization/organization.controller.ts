@@ -270,7 +270,10 @@ export class OrganizationController {
         HttpStatus.BAD_REQUEST,
       );
     }
-    org.parentId = organization.id;
+
+    if (org.type == organizationType.supplier) {
+      org.parentId = organization.id;
+    }
     if (org.type == organizationType.buyer) {
       if (createUserOrg.organization.apr) {
         org.apr = createUserOrg.organization.apr;
