@@ -20,7 +20,8 @@ export class OrganizationDto extends EntityDto {
   @AutoMap() taxId: string;
 
   @AutoMap() type: string;
-
+  
+  @AutoMap() apr: number;
   @AutoMap() status: string;
 }
 

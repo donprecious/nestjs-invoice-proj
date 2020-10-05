@@ -7,18 +7,18 @@ export class CreateOrganizationDto {
   name: string;
   @IsNotEmpty()
   code: string;
- 
+
   email: string;
 
   @IsNotEmpty()
   address: Address;
   @IsNotEmpty()
   phone: string;
-  
+
   bankcode: string;
- 
+
   bankNumber: string;
- 
+
   taxId: string;
 
   @IsIn(['supplier', 'buyer'])
@@ -26,6 +26,8 @@ export class CreateOrganizationDto {
   type: string;
 
   buyerId: string;
+  apr: number;
+  discountRatio: number;
 }
 
 export class EditOrganizationDto {
@@ -46,7 +48,8 @@ export class EditOrganizationDto {
   bankNumber: string;
 
   taxId: string;
-
+  apr: number;
+  discountRatio: number;
   @IsIn(['active', 'inactive'])
   @IsNotEmpty()
   status: string;

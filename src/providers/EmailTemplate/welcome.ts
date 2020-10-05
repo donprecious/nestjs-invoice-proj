@@ -1,11 +1,10 @@
 import * as _ from 'lodash';
 
-const template = `
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+const template = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<title>Demystifying Email Design</title>
+<title>Frontedge </title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 </head>
 <body style="margin: 0; padding: 0;">
@@ -45,8 +44,9 @@ const template = `
                         </td>
                     </tr>
                     <tr>
-                        <td align="center" bgcolor="#fff" style="padding: 0px 0px 0px 0px; margin-top: 60px; color: #153643; font-size: 28px; font-weight: bold; font-family: Arial, sans-serif;">
-                            <img src="https://frontedge-assets.s3-eu-west-1.amazonaws.com/Email+Template.svg" alt="Creating Email Magic" width="600" height="450" style="display: block;" />
+                        <td align="center" style="padding: 1px 0px 1px 0px; margin-top: 60px; color: #153643; font-size: 28px; font-weight: bold; font-family: Arial, sans-serif; height: 300px; background-color: #358EE1;">
+                            <img src="https://frontedge-assets.s3-eu-west-1.amazonaws.com/Vector.png" alt="FRONT EDGE " width="62" height="55" style="display: block; padding: 1em; background-color: white; border-radius: 2.6em;" />
+                            <a style="display: block; margin:auto; font-weight: 100; margin-top: 10px; color: white;">WELCOME ON BOARD</a>
                         </td>
                     </tr>
                     <tr>
@@ -55,14 +55,11 @@ const template = `
                                 <tr>
                                
                                 </tr>
-
-
                                 <tr>
                                     <td style="padding: 10px 0 30px 0; line-height: 18px; font-size: 13px; font-weight: normal; text-align: justify; color: #626060; font-family: Arial, sans-serif; font-size: 14px; line-height: 20px;">
-                                       {message}
+                                    {message}
                                
-
-                                </td>
+                                          </td>
                                 </tr>
                                 <tr>
                                     <td>
@@ -87,9 +84,7 @@ const template = `
         </tr>
     </table>
 </body>
-</html>
-`;
-
+</html>`;
 export const getTemplate = message => {
   const temp = template;
   const replaced = _.replace(temp, '{message}', message);

@@ -58,17 +58,16 @@ import { EmailService } from 'src/services/notification/email/email.service';
 import { ConfigConstant } from 'src/shared/constants/ConfigConstant';
 import { EmailDto } from 'src/shared/dto/emailDto';
 import { JwtAuthGuard } from 'src/modules/identity/auth/jwtauth.guard';
-import moment = require('moment');
 import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception';
-import { String } from 'lodash';
-import { PromiseUtils, FindConditions, Like } from 'typeorm';
+import { FindConditions, Like } from 'typeorm';
 import { GetRoleDto } from 'src/dto/role/role.dto';
+import { OrganizationService } from 'src/services/organization/organization.services';
 @UseGuards(JwtAuthGuard, RolePermissionGuard)
 @ApiTags('organization')
 @Controller('organization')
 export class OrganizationController {
   constructor(
-    private orgService: OrganizationRepository,
+    private orgRepo: OrganizationRepository,
     private userRepo: UserRepository,
     private roleRepo: RoleRepository,
     private orgInvite: OrganizationInviteRepository,
@@ -76,6 +75,7 @@ export class OrganizationController {
     private appService: AppService,
     private emailSerice: EmailService,
     private configService: ConfigService,
+    private orgService: OrganizationService,
   ) {}
 
   @ApiHeader({
@@ -98,7 +98,7 @@ export class OrganizationController {
     const org = (createOrg as unknown) as Organization;
 
     // check if an org exist in the db
-    const existedOrg = await this.orgService.find({
+    const existedOrg = await this.orgRepo.find({
       where: { code: org.code },
     });
     if (existedOrg.length > 0) {
@@ -108,10 +108,30 @@ export class OrganizationController {
         ),
       );
     }
+    if (org.type == organizationType.supplier) {
+      org.parentId = organization.id;
+    }
 
-    org.parentId = organization.id;
-    await this.orgService.insert(org);
+    if (org.type == organizationType.buyer) {
+      if (createOrg.apr) {
+        org.apr = createOrg.apr;
+      } else {
+        const apr = this.configService.get<number>(ConfigConstant.APR);
+        if (apr) {
+          org.apr = apr;
+        }
+      }
+    }
+    await this.orgRepo.insert(org);
 
+    if (org.type == organizationType.supplier) {
+      if (createOrg.discountRatio) {
+        await this.orgService.ComputeSupplierApr(
+          org.id,
+          createOrg.discountRatio,
+        );
+      }
+    }
     const orgInvite = {
       invitedByOrganization: organization,
       inviteeOrganization: org,
@@ -127,7 +147,7 @@ export class OrganizationController {
     @Body() editOrg: EditOrganizationDto,
     @Param('organizationId') organizationId: string,
   ) {
-    const organization = await this.orgService.findOne({
+    const organization = await this.orgRepo.findOne({
       where: { id: organizationId },
     });
 
@@ -137,7 +157,7 @@ export class OrganizationController {
         AppResponse.badRequest('organization not found'),
       );
     }
-    const existedOrg = await this.orgService.findOne({
+    const existedOrg = await this.orgRepo.findOne({
       where: { code: editOrg.code },
     });
     if (existedOrg && existedOrg.id != organization.id) {
@@ -160,10 +180,23 @@ export class OrganizationController {
     organization.status = editOrg.status;
 
     organization.updatedBy = currentUser.id;
+    if (organization.type == organizationType.buyer) {
+      if (editOrg.apr) {
+        organization.apr = editOrg.apr;
+      } else {
+        const apr = this.configService.get<number>(ConfigConstant.APR);
+        if (apr) {
+          organization.apr = apr;
+        }
+      }
+    }
+    if (organization.type == organizationType.supplier) {
+      if (editOrg.discountRatio) {
+        organization.apr = editOrg.discountRatio;
+      }
+    }
 
-    console.log(organization);
-
-    await this.orgService.update(organization.id, organization);
+    await this.orgRepo.update(organization.id, organization);
 
     return AppResponse.OkSuccess(organization);
   }
@@ -195,7 +228,7 @@ export class OrganizationController {
     const org = (createUserOrg.organization as unknown) as Organization;
 
     // check if an org exist in the db
-    const existedOrg = await this.orgService.find({
+    const existedOrg = await this.orgRepo.find({
       where: { code: org.code },
     });
     if (existedOrg.length > 0) {
@@ -237,13 +270,23 @@ export class OrganizationController {
       );
     }
     org.parentId = organization.id;
-    await this.orgService.insert(org);
+    if (org.type == organizationType.buyer) {
+      if (createUserOrg.organization.apr) {
+        org.apr = createUserOrg.organization.apr;
+      } else {
+        const apr = this.configService.get<number>(ConfigConstant.APR);
+        if (apr) {
+          org.apr = apr;
+        }
+      }
+    }
+    await this.orgRepo.insert(org);
 
     user.organization = org;
     user.role = role;
     await this.userRepo.insert(user);
 
-    const createByOrgan = await this.orgService.findOne({
+    const createByOrgan = await this.orgRepo.findOne({
       where: { id: organization.id },
     });
     if (createByOrgan) {
@@ -404,7 +447,7 @@ export class OrganizationController {
   @AllowPermissions(BuyerPermissions.viewSuppliers)
   @Get('suppliers/buyer/:buyerId')
   async mySupplier(@Param('buyerId') buyerId: string) {
-    const suppliers = await this.orgService.find({
+    const suppliers = await this.orgRepo.find({
       where: { parentId: buyerId },
     });
     return AppResponse.OkSuccess(suppliers);
@@ -419,7 +462,7 @@ export class OrganizationController {
     if (filters.search) {
       where.name = Like(`%${filters.search}%`);
     }
-    const buyer = await this.orgService.find({
+    const buyer = await this.orgRepo.find({
       where: where,
     });
 
@@ -428,9 +471,15 @@ export class OrganizationController {
 
   @AllowPermissions(BuyerPermissions.listBuyer)
   @Get('buyers')
-  async GetBuyers() {
-    const buyers = await this.orgService.find({
-      where: { type: organizationType.buyer },
+  async GetBuyers(@Query() filters: OrganizationFilter) {
+    const where: FindConditions<Organization> = {
+      type: organizationType.buyer,
+    };
+    if (filters.search) {
+      where.name = Like(`%${filters.search}%`);
+    }
+    const buyers = await this.orgRepo.find({
+      where: where,
     });
     return AppResponse.OkSuccess(buyers);
   }
@@ -439,7 +488,7 @@ export class OrganizationController {
   //get all buyers a supplier belongs to
   @Get('buyers/supplier/:supplierId')
   async GetBuyerSupplier(@Param('supplierId') supplierId: string) {
-    const buyers = await this.orgService.find({
+    const buyers = await this.orgRepo.find({
       where: { parentId: supplierId },
     });
 
@@ -497,7 +546,7 @@ export class OrganizationController {
   @AllowPermissions(SupplierPermissions.viewBuyers, BuyerPermissions.ViewBuyer)
   @Get(':organizationId')
   async Get(@Param('organizationId') organizationId: string) {
-    const organization = await this.orgService.findOne({
+    const organization = await this.orgRepo.findOne({
       where: { id: organizationId },
     });
 

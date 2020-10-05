@@ -1,4 +1,7 @@
-import { InvoiceRepository } from './../../services/invoice/invoice';
+import {
+  InvoiceRepository,
+  InvoiceService,
+} from './../../services/invoice/invoice';
 import { ConfigModule } from '@nestjs/config/dist/config.module';
 import { EmailService } from './../../services/notification/email/email.service';
 import { RoleRepository } from './../../services/role/roleService';
@@ -16,7 +19,17 @@ import { JwtAuthGuard } from '../identity/auth/jwtauth.guard';
 import { MulterModule } from '@nestjs/platform-express/multer/multer.module';
 import { AppService } from 'src/services/app/app.service';
 import { BankTransactionRepository } from 'src/services/transaction/transaction.service';
+import { OrganizationService } from 'src/services/organization/organization.services';
 
+const respositories = [
+  OrganizationRepository,
+  UserRepository,
+  RoleRepository,
+  OrganizationInviteRepository,
+  InvitationRepository,
+  InvoiceRepository,
+  BankTransactionRepository,
+];
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -44,7 +57,16 @@ import { BankTransactionRepository } from 'src/services/transaction/transaction.
     AppService,
     MulterModule.register(),
     ConfigModule,
+    OrganizationService,
+    InvoiceService,
   ],
-  providers: [EmailService, JwtStrategy, JwtAuthGuard, AppService],
+  providers: [
+    EmailService,
+    JwtStrategy,
+    JwtAuthGuard,
+    AppService,
+    OrganizationService,
+    InvoiceService,
+  ],
 })
 export class SharedModule {}
