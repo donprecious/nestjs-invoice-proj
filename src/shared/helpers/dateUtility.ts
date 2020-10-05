@@ -1,27 +1,54 @@
-export const dataUtility = {};
+import { dateFilterConstant } from './../app/dateFilterConstant';
 
-import { MoreThan, MoreThanOrEqual, LessThan, LessThanOrEqual } from 'typeorm';
-import { format } from 'date-fns';
 import moment = require('moment');
-// TypeORM query operators polyfills
-enum EDateType {
-  Date = 'yyyy-MM-dd',
-  Datetime = 'yyyy-MM-dd HH:MM:SS',
-}
+import { endOfDay } from 'date-fns';
+import { Moment } from 'moment';
 
-const MoreThanDate = (date: Date, type: EDateType) =>
-  MoreThan(format(date, type));
-const MoreThanOrEqualDate = (date: Date, type: EDateType) =>
-  MoreThanOrEqual(format(date, type));
-const LessThanDate = (date: Date, type: EDateType) =>
-  LessThan(format(date, type));
-const LessThanOrEqualDate = (date: Date, type: EDateType) =>
-  LessThanOrEqual(format(date, type));
+export const getToday = () => {
+  const from = moment().startOf('day');
+  const to = moment().endOf('day');
 
-export {
-  MoreThanDate,
-  MoreThanOrEqualDate,
-  LessThanDate,
-  LessThanOrEqualDate,
-  EDateType,
+  return { from, to };
+};
+
+export const getLast7Days = () => {
+  const from = moment()
+    .subtract(7, 'days')
+    .startOf('day');
+  const to = moment().endOf('day');
+  return { from, to };
+};
+
+export const getLast30Days = () => {
+  const from = moment()
+    .subtract(30, 'days')
+    .startOf('day');
+  const to = moment().endOf('day');
+  return { from, to };
+};
+
+export const getCustom = (fromDate: string, toDate: string) => {
+  const from = moment(fromDate).startOf('day');
+  const to = moment(toDate).endOf('day');
+  return { from, to };
+};
+
+export const getDateFromFilter = (
+  dateFilter: string,
+): { from: Moment; to: Moment } => {
+  switch (dateFilter) {
+    case dateFilterConstant.today:
+      return getToday();
+      break;
+    case dateFilterConstant.last7Days:
+      return getLast7Days();
+      break;
+    case dateFilterConstant.last30Day:
+      return getLast30Days();
+      break;
+    default:
+      // compute all time
+      return { from: moment.min(), to: moment.max() };
+      break;
+  }
 };

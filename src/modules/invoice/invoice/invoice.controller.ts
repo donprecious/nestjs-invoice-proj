@@ -1,33 +1,29 @@
-import { organizationType } from './../../../shared/app/organizationType';
-import { InvoiceParameter } from './../../../dto/invoice/invoice.dto';
-import { InvoicePermissions } from './../../../shared/app/permissionsType';
+import { invoiceStatus } from './../../../shared/app/invoiceStatus';
 import {
-  supplier,
-  buyer,
-} from './../../../shared/oranization/organizationType';
+  InvoiceParameter,
+  UpdateInvoiceDto,
+  UpdateInvoicePaymentDate,
+} from './../../../dto/invoice/invoice.dto';
+import { InvoicePermissions } from './../../../shared/app/permissionsType';
 import {
   PaginationQueryParam,
   PaginatedResultDto,
 } from './../../../shared/dto/pagination.dto';
 import { In } from 'typeorm/find-options/operator/In';
-import { Organization } from 'src/entities/organization.entity';
-import { invoiceExcelSchema } from './../invoiceExcelSchema';
 
 import { AppResponse } from 'src/shared/helpers/appresponse';
 import { OrganizationRepository } from 'src/services/organization/organizationService';
-import { InvoiceRepository } from './../../../services/invoice/invoice';
+import {
+  InvoiceRepository,
+  InvoiceService,
+} from './../../../services/invoice/invoice';
 import { Invoice } from './../../../entities/invoice.entity';
 import readXlsxFile = require('read-excel-file/node');
 import * as _ from 'lodash';
-import {
-  paginate,
-  Pagination,
-  IPaginationOptions,
-} from 'nestjs-typeorm-paginate';
+import { ConfigService } from '@nestjs/config';
+import { ConfigConstant } from 'src/shared/constants/ConfigConstant';
 
 import {
-  CreateInvoiceDto,
-  CreateManyInvoiceBySupplierDto,
   CreateManyInvoiceDto,
   InvoiceFilter,
 } from './../../../dto/invoice/create-invoice.dto';
@@ -41,8 +37,10 @@ import {
   Body,
   Controller,
   Get,
+  NotFoundException,
   Param,
   Post,
+  Put,
   Query,
   Request,
   UnauthorizedException,
@@ -52,21 +50,14 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/modules/identity/auth/jwtauth.guard';
 import { AnyFilesInterceptor } from '@nestjs/platform-express/multer/interceptors/any-files.interceptor';
-import {
-  Any,
-  Between,
-  FindConditions,
-  LessThanOrEqual,
-  MoreThanOrEqual,
-} from 'typeorm';
+import { Between, FindConditions } from 'typeorm';
 import { AppService } from 'src/services/app/app.service';
-import { EmailService } from 'src/services/notification/email/email.service';
-import { ConfigService } from '@nestjs/config';
 import moment = require('moment');
 
 import { AllowPermissions } from 'src/shared/guards/permission.decorator';
 import { RolePermissionGuard } from 'src/shared/guards/role-permission.guard';
 import { OrganizationTypeEnum } from 'src/shared/app/organizationType';
+import { invoiceExcelSchema } from './../invoiceExcelSchema';
 
 @UseGuards(JwtAuthGuard, RolePermissionGuard)
 @ApiTags('invoice')
@@ -76,6 +67,8 @@ export class InvoiceController {
     private invoiceRepo: InvoiceRepository,
     private orgRepo: OrganizationRepository,
     private appService: AppService,
+    private invoiceService: InvoiceService,
+    private configService: ConfigService,
   ) {}
 
   @ApiHeader({
@@ -87,7 +80,7 @@ export class InvoiceController {
   async create(@Body() createInvoices: CreateManyInvoiceDto, @Request() req) {
     const organization = await this.appService.getOrganization();
 
-    const orgnizationId = organization.id;
+    //const orgnizationId = organization.id;
 
     // validate invoices
     const invoiceNos = createInvoices.invoices.map(a => a.invoiceNumber);
@@ -156,6 +149,7 @@ export class InvoiceController {
         dueDate: row.dueDate,
         discountAmount: 0.95 * row.amount,
         createdByOrganization: organization,
+        status: invoiceStatus.accepted,
         createdForOrganization: uniqueOrganizations.find(
           a => a.code == row.supplierCode,
         ),
@@ -164,6 +158,19 @@ export class InvoiceController {
     }
     this.invoiceRepo.save(invoices);
 
+    const buyerApr =
+      organization.apr > 0.0
+        ? organization.apr
+        : this.configService.get<number>(ConfigConstant.APR);
+
+    for (const invoice of invoices) {
+      await this.invoiceService.ComputeInvoiceDiscountAmount(
+        invoice.invoiceNumber,
+        invoice.status,
+        buyerApr,
+        organization,
+      );
+    }
     return AppResponse.OkSuccess(createInvoices);
   }
 
@@ -271,10 +278,11 @@ export class InvoiceController {
     for (const row of result.rows) {
       const invoice = {
         amount: row.amount,
-        discountAmount: 0.95 * row.amount,
+        discountAmount: 0.9 * row.amount,
         invoiceNumber: row.invoiceNo,
         currencyCode: row.currencyCode,
         dueDate: row.dueDate,
+        status: invoiceStatus.accepted,
         createdByOrganization: organization,
         createdForOrganization: uniqueOrganizations.find(
           a => a.code == row.supplierCode,
@@ -282,8 +290,24 @@ export class InvoiceController {
       } as Invoice;
       invoices.push(invoice);
     }
-    this.invoiceRepo.save(invoices);
+    await this.invoiceRepo.save(invoices);
 
+    const buyerApr =
+      organization.apr > 0.0
+        ? organization.apr
+        : this.configService.get<number>(ConfigConstant.APR);
+
+    for (const invoice of invoices) {
+      console.log(
+        ' processing discount for invoice id' + invoice.invoiceNumber,
+      );
+      await this.invoiceService.ComputeInvoiceDiscountAmount(
+        invoice.invoiceNumber,
+        invoice.status,
+        buyerApr,
+        organization,
+      );
+    }
     return AppResponse.OkSuccess(invoices);
   }
 
@@ -503,6 +527,7 @@ export class InvoiceController {
     const result = await this.invoiceRepo.GetInvoiceOverview(
       param.type,
       organization,
+      param.dateFilter,
     );
     return AppResponse.OkSuccess(result);
   }
@@ -517,6 +542,61 @@ export class InvoiceController {
     if (!invoice) {
       throw new BadRequestException(AppResponse.badRequest('No Invoice Found'));
     }
+    return AppResponse.OkSuccess(invoice);
+  }
+
+  @Put('payment/:invoiceId')
+  async UpdateInvoicePaymentDate(
+    @Param('invoiceId') invoiceId: string,
+    @Body() updatePaymentDate: UpdateInvoicePaymentDate,
+  ) {
+    const invoice = await this.invoiceRepo.findOne({
+      where: { id: invoiceId },      
+      relations: ['createdByOrganization'],
+    });
+    if (!invoice) {
+      throw new NotFoundException(AppResponse.NotFound('invoice not found'));
+    }
+
+    invoice.paymentReference = updatePaymentDate.paymentReference;
+    invoice.status = invoiceStatus.paid;
+
+    if (!updatePaymentDate.paymentDate) {
+      invoice.paymentDate = moment().toDate();
+    } else {
+      if (moment(invoice.createdOn).isAfter(updatePaymentDate.paymentDate)) {
+        throw new BadRequestException(
+          AppResponse.badRequest(
+            'payment date should be  greater than invoice created date',
+          ),
+        );
+      }
+      if (moment(updatePaymentDate.paymentDate).isAfter(invoice.dueDate)) {
+        throw new BadRequestException(
+          AppResponse.badRequest(
+            'payment date should be below invoice due date',
+          ),
+        );
+      }
+      invoice.paymentDate = updatePaymentDate.paymentDate;
+    }
+
+    await this.invoiceRepo.update(invoice.id, invoice);
+
+    console.log (" buyer is "+invoice.createdByOrganization);
+    
+
+    const buyerApr =
+      (invoice.createdByOrganization?.apr == null )
+        ? this.configService.get<number>(ConfigConstant.APR) 
+        : invoice.createdByOrganization?.apr;
+
+    await this.invoiceService.ComputeInvoiceDiscountAmount(
+      invoice.invoiceNumber,
+      invoice.status,
+      buyerApr,
+      invoice.createdByOrganization,
+    );
     return AppResponse.OkSuccess(invoice);
   }
 }

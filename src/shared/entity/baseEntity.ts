@@ -13,19 +13,19 @@ export class BaseEntity {
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   @AutoMap()
-  createdOn: Timestamp;
+  createdOn: Date;
 
   @Column({ nullable: true })
   createdBy?: string;
 
   @Column({ nullable: true, type: 'timestamp' })
-  updatedOn?: Timestamp;
+  updatedOn?: Date;
 
   @Column({ nullable: true })
   updatedBy?: string;
 
   @Column({ nullable: true, type: 'timestamp' })
-  deletedOn?: Timestamp;
+  deletedOn?: Date;
 
   @Column({ nullable: true })
   deletedBy?: string;

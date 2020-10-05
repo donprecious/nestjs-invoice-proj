@@ -17,4 +17,5 @@ export const ConfigConstant = {
   defaultPassword: 'DEFAULT_ADMIN_PASSWORD',
   invitationExpireTimeInMintues: 'INVITATION_EXPIRE_TIME_IN_MINTUES',
   okraKey: 'OKRA_KEY',
+  APR: 'DEFAULT_APR',
 };
