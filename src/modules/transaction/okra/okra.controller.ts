@@ -55,7 +55,7 @@ export class OkraController {
     return AppResponse.OkSuccess(okraData);
   }
 
-  @Post('callback')
+  @Post('callback/:organizationID')
   okraCallback(
     @Param('organizationID') organizationId: string,
     @Body('method') method: string,
