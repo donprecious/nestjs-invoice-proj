@@ -5,7 +5,7 @@ import {
   BuyerPermissions,
   UserPermissions,
 } from './../../../../shared/app/permissionsType';
-import { supplier } from './../../../../shared/oranization/organizationType';
+import { statusConstant } from 'src/shared/constants/StatusConstant';
 import { AllowPermissions } from './../../../../shared/guards/permission.decorator';
 import { RolePermissionGuard } from './../../../../shared/guards/role-permission.guard';
 import { OrganizationFilter } from './../../../../dto/organization/organization.dto';
@@ -388,11 +388,9 @@ export class OrganizationController {
     } as Invitation;
     await this.invitationRepo.save(invitation);
     // todo send email to this user with invitation link]
-    const organizationInvite = await this.orgInvite.findOne({
-      where: { inviteeOrganization: org },
-    });
+    
 
-    if (organizationInvite.status == invitationStatus.accepted) {
+    if (org.status == statusConstant.active) {
       //  create otp and send the user
       const inviteUrl =
         this.configService.get(ConfigConstant.frontendUrl) +
