@@ -538,7 +538,7 @@ export class InvoiceController {
     const overDueInvoices = await this.invoiceRepo.find({
       where: { dueDate: MoreThan(currentDate) },
     });
-    overDueInvoices.forEach(a => a.status == invoiceStatus.overdue);
+    overDueInvoices.forEach(a => a.status = invoiceStatus.overdue);
     await this.invoiceRepo.save(overDueInvoices);
     return AppResponse.OkSuccess(overDueInvoices);
   }
