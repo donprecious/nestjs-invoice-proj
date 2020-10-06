@@ -536,7 +536,7 @@ export class InvoiceController {
   async UpdateOverDue() {
     const currentDate = moment().toDate();
     const overDueInvoices = await this.invoiceRepo.find({
-      where: { dueDate: LessThan(currentDate) },
+      where: { dueDate: LessThan(currentDate) , status : invoiceStatus.paid  },
     });
     overDueInvoices.forEach(a => a.status = invoiceStatus.overdue);
     await this.invoiceRepo.save(overDueInvoices);
