@@ -363,12 +363,9 @@ export class OrganizationController {
         HttpStatus.BAD_REQUEST,
       );
     }
-
-    let rolename = createUser.role;
-    if (!createUser.role) {
-      rolename = org.type;
-    }
-    const role = await this.roleRepo.findOne({ where: { Name: rolename } });
+    
+    
+    const role = await this.roleRepo.findOne({ where: { id: createUser.role } });
 
     if (!role) {
       throw new BadRequestException(AppResponse.badRequest('role not found'));
