@@ -54,7 +54,7 @@ export class Organization extends BaseEntity {
   @Column({ default: 'active' })
   status: string;
 
-  @Column({ nullable: true, type: 'decimal', precision: 12, scale: 2 })
+  @Column({ nullable: true, type: 'decimal', precision: 5, scale: 2 })
   apr: number;
 
   @Column({ nullable: true })
