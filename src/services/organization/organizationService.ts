@@ -26,3 +26,4 @@ export class InvitationRepository extends Repository<Invitation> {
     super();
   }
 }
+
