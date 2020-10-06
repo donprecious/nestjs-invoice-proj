@@ -305,7 +305,7 @@ export class OrganizationController {
     const expiresIn = this.appService.generateInvitationExpireTime().toDate();
     const invitation = {
       invitedByUser: currentUser, // update to current loggedin user
-      confirmationType: roleTypes.supplierAdmin,
+      confirmationType: rolename,
       organization: org,
       status: invitationStatus.pending,
       user: user,
