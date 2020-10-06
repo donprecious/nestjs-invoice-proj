@@ -324,6 +324,10 @@ export class OrganizationController {
     const message = getWelcomeMessage(
       user.firstName + ' ' + user.lastName,
       link,
+      user.role.type,
+      organization.name,
+      '',
+      currentUser.firstName + ' ' + currentUser.lastName,
     );
     const template = getTemplate(message);
     const emailMessage: EmailDto = {
@@ -403,7 +407,10 @@ export class OrganizationController {
       const message = getWelcomeMessage(
         user.firstName + ' ' + user.lastName,
         link,
+        user.role.type,
+        org.name,
         moreInfo,
+        currentUser.firstName + ' ' + currentUser.lastName,
       );
       const template = getTemplate(message);
       const emailMessage: EmailDto = {
@@ -422,6 +429,10 @@ export class OrganizationController {
         const message = getWelcomeMessage(
           user.firstName + ' ' + user.lastName,
           link,
+          user.role.type,
+          org.name,
+          ' ',
+          currentUser.firstName + ' ' + currentUser.lastName,
         );
         const template = getTemplate(message);
         const emailMessage: EmailDto = {

@@ -57,7 +57,7 @@ export class Organization extends BaseEntity {
   @Column({ nullable: true })
   apr: number;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, type: 'decimal', precision: 12, scale: 2 })
   parentId: string;
 
   @OneToMany(
