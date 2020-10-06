@@ -48,7 +48,7 @@ export const getDateFromFilter = (
       break;
     default:
       // compute all time
-      return { from: moment.min(), to: moment.max() };
+      return { from: moment('2000/1/1'), to: moment() };
       break;
   }
 };
