@@ -123,6 +123,9 @@ export class OrganizationController {
         }
       }
     }
+
+    org.status = statusConstant.inactive;
+    
     await this.orgRepo.insert(org);
 
     if (org.type == organizationType.supplier) {
