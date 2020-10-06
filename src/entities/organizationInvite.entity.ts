@@ -11,8 +11,9 @@ export class OrganizationInvite extends BaseEntity {
   )
   invitedByOrganization: Organization;
 
-  @ManyToOne(
-    type => Organization,
-  )
+  @ManyToOne(type => Organization)
   inviteeOrganization: Organization;
+
+  @Column({ default: 'pending' })
+  status: string;
 }

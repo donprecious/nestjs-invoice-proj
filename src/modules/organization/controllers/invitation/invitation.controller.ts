@@ -13,7 +13,10 @@ import { AppResponse } from './../../../../shared/helpers/appresponse';
 import { UserDto } from './../../../../dto/user/user.dto';
 import { OrganizationDto } from './../../../../dto/organization/organization.dto';
 import { roleTypes } from './../../../../shared/app/roleTypes';
-import { InvitationRepository } from './../../../../services/organization/organizationService';
+import {
+  InvitationRepository,
+  OrganizationInviteRepository,
+} from './../../../../services/organization/organizationService';
 import {
   BadRequestException,
   Controller,
@@ -53,6 +56,7 @@ export class InvitationController {
   constructor(
     private invitationRepo: InvitationRepository,
     private orgRepo: OrganizationRepository,
+    private orgInviteRepo: OrganizationInviteRepository,
     private userRepo: UserRepository,
     private emailSerice: EmailService,
     private configService: ConfigService,
@@ -161,6 +165,12 @@ export class InvitationController {
 
     invite.status = updateStatus.status;
     await this.invitationRepo.update(invite.id, invite);
+    const organization = invite.organization;
+    const organizationInvite = await this.orgInviteRepo.findOne({
+      where: { inviteeOrganization: organization },
+    });
+    organizationInvite.status = updateStatus.status;
+    await this.orgInviteRepo.update(organizationInvite.id, organizationInvite);
     if (updateStatus.status == invitationStatus.accepted) {
       const message = `Invitation Accepted! , Activate your account with this Otp : <b>${otp}</b>
       `;
@@ -218,7 +228,12 @@ export class InvitationController {
   ) {
     const invite = await this.invitationRepo.findOne({
       where: { id: invitationId },
-      relations: ['user', 'organization'],
+      relations: [
+        'user',
+        'organization',
+        'user.role',
+        'invitedByUser.organization',
+      ],
     });
 
     if (!invite) {
@@ -253,17 +268,79 @@ export class InvitationController {
       `join/?inviteId=${invite.id}`;
 
     const link = `<a href=${inviteUrl}>${inviteUrl}</a>`;
-    const message = getWelcomeMessage(
-      invite.user.firstName + ' ' + invite.user.lastName,
-      link,
-    );
-    const template = getTemplate(message);
-    const emailMessage: EmailDto = {
-      to: [invite.user.email],
-      body: template,
-      subject: 'Activate Your Account',
-    };
-    this.emailSerice.sendEmail(emailMessage).subscribe(d => console.log(d));
+    const otp = GenerateRandom(10315, 99929);
+    const user = invite.user;
+    user.otp = otp;
+    const expiretime = moment().add(20, 'minutes');
+    user.otpExpiresIn = expiretime.toDate();
+    await this.userRepo.save(user);
+    let moreInfo = ' ';
+    const organizationInvite = await this.orgInviteRepo.findOne({
+      where: { inviteeOrganization: invite.organization },
+    });
+    if (organizationInvite.status == invitationStatus.accepted) {
+      //  create otp and send the user
+      const inviteUrl =
+        this.configService.get(ConfigConstant.frontendUrl) +
+        `auth/activate/${user.id}/?inviteId=${invite.id}`;
+
+      moreInfo = `Activate your account with this Otp : <b>${otp}</b>`;
+      const link = `<a href=${inviteUrl}>${inviteUrl}</a>`;
+      const message = getWelcomeMessage(
+        user.firstName + ' ' + user.lastName,
+        link,
+        user.role.type,
+        invite.invitedByUser.organization.name,
+        moreInfo,
+        invite.invitedByUser.firstName + ' ' + invite.invitedByUser.lastName,
+      );
+      const template = getTemplate(message);
+      const emailMessage: EmailDto = {
+        to: [user.email],
+        body: template,
+        subject: 'Activate your Account',
+      };
+      this.emailSerice.sendEmail(emailMessage).subscribe(d => console.log(d));
+    } else {
+      const role = invite.user.role;
+      if (role.type == roleTypes.admin) {
+        const inviteUrl =
+          this.configService.get(ConfigConstant.frontendUrl) +
+          `join/?inviteId=${invite.id}`;
+
+        const link = `<a href=${inviteUrl}>${inviteUrl}</a>`;
+        const message = getWelcomeMessage(
+          user.firstName + ' ' + user.lastName,
+          link,
+          user.role.type,
+          invite.invitedByUser.organization.name,
+          ' ',
+          invite.invitedByUser.firstName + ' ' + invite.invitedByUser.lastName,
+        );
+        const template = getTemplate(message);
+        const emailMessage: EmailDto = {
+          to: [user.email],
+          body: template,
+          subject: 'Activate Your Account',
+        };
+        this.emailSerice.sendEmail(emailMessage).subscribe(d => console.log(d));
+      }
+    }
+
+    // const message = getWelcomeMessage(
+    //   invite.user.firstName + ' ' + invite.user.lastName,
+    //   link,
+    //   invite.user.role.type,
+    //   invite.invitedByUser.organization.name,
+    //   " "
+    // );
+    // const template = getTemplate(message);
+    // const emailMessage: EmailDto = {
+    //   to: [invite.user.email],
+    //   body: template,
+    //   subject: 'Activate Your Account',
+    // };
+    // this.emailSerice.sendEmail(emailMessage).subscribe(d => console.log(d));
     return AppResponse.OkSuccess({}, 'invitation sent');
   }
 }

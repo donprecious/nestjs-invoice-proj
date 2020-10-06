@@ -62,6 +62,7 @@ import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception
 import { FindConditions, Like } from 'typeorm';
 import { GetRoleDto } from 'src/dto/role/role.dto';
 import { OrganizationService } from 'src/services/organization/organization.services';
+import moment = require('moment');
 @UseGuards(JwtAuthGuard, RolePermissionGuard)
 @ApiTags('organization')
 @Controller('organization')
@@ -269,7 +270,10 @@ export class OrganizationController {
         HttpStatus.BAD_REQUEST,
       );
     }
-    org.parentId = organization.id;
+
+    if (org.type == organizationType.supplier) {
+      org.parentId = organization.id;
+    }
     if (org.type == organizationType.buyer) {
       if (createUserOrg.organization.apr) {
         org.apr = createUserOrg.organization.apr;
@@ -320,6 +324,10 @@ export class OrganizationController {
     const message = getWelcomeMessage(
       user.firstName + ' ' + user.lastName,
       link,
+      user.role.type,
+      organization.name,
+      '',
+      currentUser.firstName + ' ' + currentUser.lastName,
     );
     const template = getTemplate(message);
     const emailMessage: EmailDto = {
@@ -356,9 +364,9 @@ export class OrganizationController {
       );
     }
 
-    let rolename = org.type;
+    let rolename = createUser.role;
     if (!createUser.role) {
-      rolename = createUser.role;
+      rolename = org.type;
     }
     const role = await this.roleRepo.findOne({ where: { Name: rolename } });
 
@@ -367,11 +375,15 @@ export class OrganizationController {
     }
     user.role = role;
     user.organization = org;
+    const otp = GenerateRandom(10315, 99929);
+    user.otp = otp;
+    const expiretime = moment().add(20, 'minutes');
+    user.otpExpiresIn = expiretime.toDate();
     await this.userRepo.insert(user);
     const expiresIn = this.appService.generateInvitationExpireTime().toDate();
     const invitation = {
       invitedByUser: currentUser, // update to current loggedin user
-      confirmationType: roleTypes.supplierAdmin,
+      confirmationType: role.type,
       organization: org,
       status: invitationStatus.pending,
       user: user,
@@ -379,24 +391,59 @@ export class OrganizationController {
     } as Invitation;
     await this.invitationRepo.save(invitation);
     // todo send email to this user with invitation link]
-    const inviteUrl =
-      this.configService.get(ConfigConstant.frontendUrl) +
-      `join/?inviteId=${invitation.id}`;
-    // const message = `Hello You have been invited to Verify and Activate your account
-    //   <br> click the click below <a href='${inviteUrl}'>Activate account</a>
-    // `;
-    const link = `<a href=${inviteUrl}>${inviteUrl}</a>`;
-    const message = getWelcomeMessage(
-      user.firstName + ' ' + user.lastName,
-      link,
-    );
-    const template = getTemplate(message);
-    const emailMessage: EmailDto = {
-      to: [user.email],
-      body: template,
-      subject: 'Activate Your Account',
-    };
-    this.emailSerice.sendEmail(emailMessage).subscribe(d => console.log(d));
+    const organizationInvite = await this.orgInvite.findOne({
+      where: { inviteeOrganization: org },
+    });
+
+    if (organizationInvite.status == invitationStatus.accepted) {
+      //  create otp and send the user
+      const inviteUrl =
+        this.configService.get(ConfigConstant.frontendUrl) +
+        `auth/activate/${user.id}/?inviteId=${invitation.id}`;
+
+      const moreInfo = `Activate your account with this Otp : <b>${otp}</b>
+     `;
+      const link = `<a href=${inviteUrl}>${inviteUrl}</a>`;
+      const message = getWelcomeMessage(
+        user.firstName + ' ' + user.lastName,
+        link,
+        user.role.type,
+        org.name,
+        moreInfo,
+        currentUser.firstName + ' ' + currentUser.lastName,
+      );
+      const template = getTemplate(message);
+      const emailMessage: EmailDto = {
+        to: [user.email],
+        body: template,
+        subject: 'Activate your Account',
+      };
+      this.emailSerice.sendEmail(emailMessage).subscribe(d => console.log(d));
+    } else {
+      if (role.type == roleTypes.admin) {
+        const inviteUrl =
+          this.configService.get(ConfigConstant.frontendUrl) +
+          `join/?inviteId=${invitation.id}`;
+
+        const link = `<a href=${inviteUrl}>${inviteUrl}</a>`;
+        const message = getWelcomeMessage(
+          user.firstName + ' ' + user.lastName,
+          link,
+          user.role.type,
+          org.name,
+          ' ',
+          currentUser.firstName + ' ' + currentUser.lastName,
+        );
+        const template = getTemplate(message);
+        const emailMessage: EmailDto = {
+          to: [user.email],
+          body: template,
+          subject: 'Activate Your Account',
+        };
+        this.emailSerice.sendEmail(emailMessage).subscribe(d => console.log(d));
+      }
+    }
+
     return AppResponse.OkSuccess({});
   }
 
