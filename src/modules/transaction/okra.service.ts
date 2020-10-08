@@ -23,7 +23,10 @@ export class OkraService {
     callbackCode: string,
     record: string) {
     if (callbackCode !== okraCallbackConstants.PRODUCT_IS_READY && callbackCode !== okraCallbackConstants.INITIAL_TRANSACTION){
-      return AppResponse.OkSuccess({});
+      return AppResponse.OkSuccess({
+        callbackCode,
+        message: 'Transaction not completed'
+      });
     }
     const organization = await this.organizationRepo.findOne({ where: { id: organizationId } });
     const okraKey = this.config.get(ConfigConstant.okraKey);
@@ -36,13 +39,13 @@ export class OkraService {
           }
         }
       ).toPromise();
-    
-    const bankTransaction = {} as BankTransactions;
+    const existingTransaction = await this.bankTransactionRepo.findOne({ where: { recordId: record } });
+    const bankTransaction = existingTransaction || {} as BankTransactions;
     bankTransaction.recordType = method;
     bankTransaction.recordId = record;
     bankTransaction.data = response.data.data;
     bankTransaction.organization = organization;
-    
+
     await this.bankTransactionRepo.save(bankTransaction);
     
     return AppResponse.OkSuccess(bankTransaction)

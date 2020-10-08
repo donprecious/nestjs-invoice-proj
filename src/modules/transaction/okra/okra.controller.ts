@@ -56,20 +56,20 @@ export class OkraController {
   }
 
   @Post('callback/:organizationID')
-  okraCallback(
+  async okraCallback(
     @Param('organizationID') organizationId: string,
     @Body('method') method: string,
     @Body('callback_url') callbackUrl: string,
     @Body('callback_code') callbackCode: string,
     @Body('record') record: string
-    ): any{
-    this.okraService.okraCallback(
+    ){
+   return await this.okraService.okraCallback(
       organizationId,
       method,
       callbackUrl,
       callbackCode,
       record
       );
-      return AppResponse.OkSuccess({})
+      
   }
 }
