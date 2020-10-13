@@ -1,21 +1,22 @@
-import { InvoiceRepository } from './../../services/invoice/invoice';
+import { UserService } from './../../services/user/user.service';
+import { InvoiceRepository } from '../../repositories/invoice/invoiceRepository';
 import { ConfigModule } from '@nestjs/config/dist/config.module';
 import { EmailService } from './../../services/notification/email/email.service';
-import { RoleRepository } from './../../services/role/roleService';
+import { RoleRepository } from '../../repositories/role/roleRepository';
 import {
   OrganizationInviteRepository,
   InvitationRepository,
-} from './../../services/organization/organizationService';
+} from '../../repositories/organization/organizationRepository';
 
 import { HttpModule, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm/dist/typeorm.module';
-import { OrganizationRepository } from 'src/services/organization/organizationService';
-import { UserRepository } from 'src/services/user/userService';
+import { OrganizationRepository } from 'src/repositories/organization/organizationRepository';
+import { UserRepository } from 'src/repositories/user/userRepository';
 import { JwtStrategy } from '../identity/jwt.strategy';
 import { JwtAuthGuard } from '../identity/auth/jwtauth.guard';
 import { MulterModule } from '@nestjs/platform-express/multer/multer.module';
 import { AppService } from 'src/services/app/app.service';
-import { BankTransactionRepository } from 'src/services/transaction/transaction.service';
+import { BankTransactionRepository } from 'src/repositories/BankTransaction/bankTransactionRepository';
 import { OrganizationService } from 'src/services/organization/organization.services';
 import { InvoiceService } from 'src/services/invoice/invoice-service.service';
 
@@ -57,6 +58,7 @@ const respositories = [
     ConfigModule,
     OrganizationService,
     InvoiceService,
+    UserService,
   ],
   providers: [
     EmailService,
@@ -65,6 +67,7 @@ const respositories = [
     AppService,
     OrganizationService,
     InvoiceService,
+    UserService,
   ],
 })
 export class SharedModule {}

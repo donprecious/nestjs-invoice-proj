@@ -14,7 +14,7 @@ import { ResetPasswordDto } from './../../../dto/auth/reset-password.dto';
 import { IsEmail } from 'class-validator';
 
 import { LoginDto } from './../../../dto/auth/login.dto';
-import { UserRepository } from './../../../services/user/userService';
+import { UserRepository } from '../../../repositories/user/userRepository';
 import { ApiTags } from '@nestjs/swagger/dist/decorators';
 import {
   BadRequestException,

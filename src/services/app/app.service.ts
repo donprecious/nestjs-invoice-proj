@@ -1,9 +1,9 @@
 import { Role } from './../../entities/Role.entity';
-import { UserRepository } from './../user/userService';
+import { UserRepository } from '../../repositories/user/userRepository';
 import { User } from './../../entities/User.entity';
 import { JwtPayloadDto } from './../../shared/dto/jwt.dto';
 import { Organization } from './../../entities/organization.entity';
-import { OrganizationRepository } from './../organization/organizationService';
+import { OrganizationRepository } from '../../repositories/organization/organizationRepository';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';

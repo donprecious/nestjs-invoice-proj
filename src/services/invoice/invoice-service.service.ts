@@ -7,7 +7,7 @@ import { invoiceStatus } from 'src/shared/app/invoiceStatus';
 import { OrganizationTypeEnum } from 'src/shared/app/organizationType';
 import { getDateFromFilter } from 'src/shared/helpers/dateUtility';
 import { FindConditions, Between } from 'typeorm';
-import { InvoiceRepository } from './invoice';
+import { InvoiceRepository } from '../../repositories/invoice/invoiceRepository';
 
 @Injectable()
 export class InvoiceService {
@@ -81,8 +81,7 @@ export class InvoiceService {
 
     const supplier = invoice.createdForOrganization;
 
-    const supplierApr =
-      supplier.apr > 0 ? buyerApr - (supplier.apr / 100) * buyerApr : buyerApr;
+    const supplierApr = supplier.apr ? supplier.apr : buyerApr;
 
     let daysOutstanding = 0;
     const creationDate = moment(invoice.createdOn);
@@ -112,34 +111,34 @@ export class InvoiceService {
     return invoice;
   }
 
-  async ComputeInvoiceDiscount(invoiceId, status: string) {
-    const invoice = await this.invoiceRepo.findOne({
-      where: { id: invoiceId },
-      relations: ['createdByOrganization', 'createdForOrganization'],
-    });
-    if (!invoice) return;
+  // async  ComputeInvoiceDiscount(invoiceId, status: string) {
+  //   const invoice = await this.invoiceRepo.findOne({
+  //     where: { id: invoiceId },
+  //     relations: ['createdByOrganization', 'createdForOrganization'],
+  //   });
+  //   if (!invoice) return;
 
-    const buyer = invoice.createdByOrganization;
-    const supplier = invoice.createdForOrganization;
-    let daysOutstanding = 0;
-    const creationDate = moment(invoice.createdOn);
+  //   const buyer = invoice.createdByOrganization;
+  //   const supplier = invoice.createdForOrganization;
+  //   let daysOutstanding = 0;
+  //   const creationDate = moment(invoice.createdOn);
 
-    if (status == invoiceStatus.pending || status == invoiceStatus.accepted) {
-      const duration = moment
-        .duration(moment(invoice.dueDate).diff(creationDate))
-        .asDays();
-      daysOutstanding = Math.abs(duration);
-    } else {
-      const duration = moment
-        .duration(moment(invoice.paymentDate).diff(creationDate))
-        .asDays();
-      daysOutstanding = Math.abs(duration);
-    }
-    const discountAmount =
-      invoice.amount -
-      invoice.amount * (daysOutstanding / 365) * (Number(supplier.apr) / 100);
-    invoice.discountAmount = discountAmount;
-    this.invoiceRepo.update(invoice.id, invoice);
-    return invoice;
-  }
+  //   if (status == invoiceStatus.pending || status == invoiceStatus.accepted) {
+  //     const duration = moment
+  //       .duration(moment(invoice.dueDate).diff(creationDate))
+  //       .asDays();
+  //     daysOutstanding = Math.abs(duration);
+  //   } else {
+  //     const duration = moment
+  //       .duration(moment(invoice.paymentDate).diff(creationDate))
+  //       .asDays();
+  //     daysOutstanding = Math.abs(duration);
+  //   }
+  //   const discountAmount =
+  //     invoice.amount -
+  //     invoice.amount * (daysOutstanding / 365) * (Number(supplier.apr) / 100);
+  //   invoice.discountAmount = discountAmount;
+  //   this.invoiceRepo.update(invoice.id, invoice);
+  //   return invoice;
+  // }
 }

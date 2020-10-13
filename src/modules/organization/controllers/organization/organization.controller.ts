@@ -24,14 +24,14 @@ import { Invitation } from './../../../../entities/Invitations.entity';
 import { OrganizationInvite } from './../../../../entities/organizationInvite.entity';
 
 import { roleTypes } from './../../../../shared/app/roleTypes';
-import { RoleRepository } from './../../../../services/role/roleService';
+import { RoleRepository } from '../../../../repositories/role/roleRepository';
 
 import { CreateOrganizationUserDto } from 'src/dto/user/create-organization-user.dto';
 import {
   OrganizationRepository,
   OrganizationInviteRepository,
   InvitationRepository,
-} from './../../../../services/organization/organizationService';
+} from '../../../../repositories/organization/organizationRepository';
 import { AppResponse } from './../../../../shared/helpers/appresponse';
 import {
   Controller,
@@ -50,7 +50,7 @@ import {
 import { ApiTags } from '@nestjs/swagger/dist/decorators/api-use-tags.decorator';
 import { Organization } from 'src/entities/organization.entity';
 import { User } from 'src/entities/User.entity';
-import { UserRepository } from 'src/services/user/userService';
+import { UserRepository } from 'src/repositories/user/userRepository';
 import { ApiHeader } from '@nestjs/swagger/dist';
 import { CreateOrganizationDto } from 'src/dto/organization/create-organization.dto';
 import { ConfigService } from '@nestjs/config';

@@ -2,8 +2,8 @@ import { Controller, Get, HttpService, Query, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiTags } from '@nestjs/swagger';
 import { BankTransactions } from 'src/entities/banktransaction.entity';
-import { OrganizationRepository } from 'src/services/organization/organizationService';
-import { BankTransactionRepository } from 'src/services/transaction/transaction.service';
+import { OrganizationRepository } from 'src/repositories/organization/organizationRepository';
+import { BankTransactionRepository } from 'src/repositories/BankTransaction/bankTransactionRepository';
 import { ConfigConstant } from 'src/shared/constants/ConfigConstant';
 import { AppResponse } from 'src/shared/helpers/appresponse';
 

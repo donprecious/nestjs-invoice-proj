@@ -2,7 +2,7 @@ import { EmailDto } from 'src/shared/dto/emailDto';
 import { EmailService } from 'src/services/notification/email/email.service';
 import { getTemplate } from 'src/providers/EmailTemplate/welcome';
 import { roleTypes } from 'src/shared/app/roleTypes';
-import { UserRepository } from 'src/services/user/userService';
+import { UserRepository } from 'src/repositories/user/userRepository';
 import {
   buyer,
   supplier,
@@ -23,8 +23,8 @@ import {
 import { In } from 'typeorm/find-options/operator/In';
 
 import { AppResponse } from 'src/shared/helpers/appresponse';
-import { OrganizationRepository } from 'src/services/organization/organizationService';
-import { InvoiceRepository } from './../../../services/invoice/invoice';
+import { OrganizationRepository } from 'src/repositories/organization/organizationRepository';
+import { InvoiceRepository } from '../../../repositories/invoice/invoiceRepository';
 import { Invoice } from './../../../entities/invoice.entity';
 import readXlsxFile = require('read-excel-file/node');
 import * as _ from 'lodash';

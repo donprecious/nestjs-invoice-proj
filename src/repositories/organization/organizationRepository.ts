@@ -1,7 +1,7 @@
-import { Invitation } from './../../entities/Invitations.entity';
-import { OrganizationInvite } from './../../entities/organizationInvite.entity';
+import { Invitation } from '../../entities/Invitations.entity';
+import { OrganizationInvite } from '../../entities/organizationInvite.entity';
 
-import { Organization } from './../../entities/organization.entity';
+import { Organization } from '../../entities/organization.entity';
 import { Repository, EntityRepository } from 'typeorm';
 
 @EntityRepository(Organization)

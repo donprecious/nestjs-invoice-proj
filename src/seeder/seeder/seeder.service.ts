@@ -12,11 +12,11 @@ import { supplier } from './../../shared/oranization/organizationType';
 
 import { ConfigConstant } from 'src/shared/constants/ConfigConstant';
 import { ConfigService } from '@nestjs/config';
-import { UserRepository } from './../../services/user/userService';
-import { OrganizationRepository } from './../../services/organization/organizationService';
+import { UserRepository } from '../../repositories/user/userRepository';
+import { OrganizationRepository } from '../../repositories/organization/organizationRepository';
 import { Organization } from 'src/entities/organization.entity';
 import { Type } from 'class-transformer';
-import { RoleRepository } from './../../services/role/roleService';
+import { RoleRepository } from '../../repositories/role/roleRepository';
 
 import { Injectable } from '@nestjs/common';
 

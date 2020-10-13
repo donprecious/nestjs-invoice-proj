@@ -9,7 +9,7 @@ import { getDateFromFilter } from 'src/shared/helpers/dateUtility';
 import {
   OrganizationRepository,
   OrganizationInviteRepository,
-} from './organizationService';
+} from '../../repositories/organization/organizationRepository';
 
 @Injectable()
 export class OrganizationService {

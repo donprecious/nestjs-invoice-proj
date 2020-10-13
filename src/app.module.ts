@@ -23,6 +23,7 @@ import { HealthController } from './health/health.controller';
 import { TransactionModule } from './modules/transaction/transaction.module';
 import { TransactionService } from './services/transaction/transaction.service';
 import { InvoiceService } from './services/invoice/invoice-service.service';
+import { UserService } from './services/user/user.service';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { InvoiceService } from './services/invoice/invoice-service.service';
     EmailService,
     TransactionService,
     InvoiceService,
+    UserService,
   ],
 })
 export class AppModule implements NestModule {

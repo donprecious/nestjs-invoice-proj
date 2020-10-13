@@ -1,7 +1,8 @@
+import { UserService } from './../../../../services/user/user.service';
 import { getTemplate } from './../../../../providers/EmailTemplate/welcome';
 import { invitationStatus } from './../../../../shared/entity/entityStatus';
-import { UserRepository } from './../../../../services/user/userService';
-import { OrganizationRepository } from 'src/services/organization/organizationService';
+import { UserRepository } from '../../../../repositories/user/userRepository';
+import { OrganizationRepository } from 'src/repositories/organization/organizationRepository';
 import { Organization } from 'src/entities/organization.entity';
 import { Mapper } from '@nartc/automapper';
 import {
@@ -16,7 +17,7 @@ import { roleTypes } from './../../../../shared/app/roleTypes';
 import {
   InvitationRepository,
   OrganizationInviteRepository,
-} from './../../../../services/organization/organizationService';
+} from '../../../../repositories/organization/organizationRepository';
 import {
   BadRequestException,
   Controller,
@@ -61,6 +62,7 @@ export class InvitationController {
     private emailSerice: EmailService,
     private configService: ConfigService,
     private appService: AppService,
+    private userService: UserService,
   ) {}
 
   @Get(':invitationId')
@@ -208,7 +210,7 @@ export class InvitationController {
 
     const updateUser = invite.user;
 
-    const otp = await this.userRepo.generateOtp(updateUser);
+    const otp = await this.userService.generateOtp(updateUser);
 
     const message = ` Activate your account with your Otp : <b>${otp}</b>
     `;

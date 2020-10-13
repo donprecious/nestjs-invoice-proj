@@ -1,9 +1,9 @@
 import { Organization } from 'src/entities/organization.entity';
 import { RoleAccessableType } from 'src/shared/entity/entityStatus';
-import { UserRepository } from './../../../services/user/userService';
+import { UserRepository } from '../../../repositories/user/userRepository';
 import { AppResponse } from 'src/shared/helpers/appresponse';
 import { BadRequestException } from '@nestjs/common/exceptions/bad-request.exception';
-import { RoleRepository } from './../../../services/role/roleService';
+import { RoleRepository } from '../../../repositories/role/roleRepository';
 import { Role } from 'src/entities/Role.entity';
 import {
   Body,
@@ -20,7 +20,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { CreateRoleDto } from 'src/dto/role/role.dto';
 import { AppService } from 'src/services/app/app.service';
-import { OrganizationRepository } from 'src/services/organization/organizationService';
+import { OrganizationRepository } from 'src/repositories/organization/organizationRepository';
 import { FindConditions, In, Like } from 'typeorm';
 import { ApiTags } from '@nestjs/swagger/dist';
 import { JwtAuthGuard } from '../auth/jwtauth.guard';
