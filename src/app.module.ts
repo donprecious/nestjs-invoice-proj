@@ -22,6 +22,7 @@ import { TerminusModule } from '@nestjs/terminus/dist/terminus.module';
 import { HealthController } from './health/health.controller';
 import { TransactionModule } from './modules/transaction/transaction.module';
 import { TransactionService } from './services/transaction/transaction.service';
+import { InvoiceService } from './services/invoice/invoice-service.service';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { TransactionService } from './services/transaction/transaction.service';
     AuthService,
     EmailService,
     TransactionService,
+    InvoiceService,
   ],
 })
 export class AppModule implements NestModule {

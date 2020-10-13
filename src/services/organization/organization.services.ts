@@ -1,13 +1,22 @@
+import { organizationType } from './../../shared/app/organizationType';
+import { Between } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Organization } from 'src/entities/organization.entity';
+import { OrganizationTypeEnum } from 'src/shared/app/organizationType';
 import { ConfigConstant } from 'src/shared/constants/ConfigConstant';
-import { OrganizationRepository } from './organizationService';
+import { getDateFromFilter } from 'src/shared/helpers/dateUtility';
+import {
+  OrganizationRepository,
+  OrganizationInviteRepository,
+} from './organizationService';
 
 @Injectable()
 export class OrganizationService {
   constructor(
     private config: ConfigService,
     private orgRepo: OrganizationRepository,
+    private orgInvite: OrganizationInviteRepository,
   ) {}
 
   async ComputeSupplierApr(
@@ -34,5 +43,77 @@ export class OrganizationService {
     supplier.apr = supplierApr;
     await this.orgRepo.update(supplier.id, supplier);
     return supplierApr;
+  }
+
+  async GetRelatedOrg(
+    orgType: OrganizationTypeEnum,
+    organization: Organization = null,
+    dateFilter: string = null,
+  ) {
+    const dateDuration = getDateFromFilter(dateFilter);
+
+    let totalCount = 0.0,
+      numberOfSuppliers = 0.0,
+      numberOfBuyers = 0.0;
+    if (orgType == OrganizationTypeEnum.Admin) {
+      totalCount = await this.orgRepo.count({
+        where: {
+          createdOn: Between(
+            dateDuration.from.toDate(),
+            dateDuration.to.toDate(),
+          ),
+        },
+      });
+      numberOfSuppliers = await this.orgRepo.count({
+        where: {
+          createdOn: Between(
+            dateDuration.from.toDate(),
+            dateDuration.to.toDate(),
+          ),
+          type: organizationType.supplier,
+        },
+      });
+      numberOfBuyers = await this.orgRepo.count({
+        where: {
+          createdOn: Between(
+            dateDuration.from.toDate(),
+            dateDuration.to.toDate(),
+          ),
+          type: organizationType.buyer,
+        },
+      });
+    }
+    if (orgType == OrganizationTypeEnum.Buyer) {
+      numberOfSuppliers = await this.orgRepo.count({
+        where: {
+          createdOn: Between(
+            dateDuration.from.toDate(),
+            dateDuration.to.toDate(),
+          ),
+          type: organizationType.supplier,
+          parentId: organization?.id,
+        },
+      });
+      totalCount = numberOfSuppliers;
+    }
+
+    if (orgType == OrganizationTypeEnum.Supplier) {
+      numberOfBuyers = await this.orgInvite.count({
+        where: {
+          createdOn: Between(
+            dateDuration.from.toDate(),
+            dateDuration.to.toDate(),
+          ),
+          inviteeOrganization: organization,
+        },
+      });
+      totalCount = numberOfBuyers;
+    }
+    const res = {
+      totalOrgCount: totalCount,
+      numberOfSuppliers,
+      numberOfBuyers,
+    };
+    return res;
   }
 }

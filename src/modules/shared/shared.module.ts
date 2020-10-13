@@ -1,7 +1,4 @@
-import {
-  InvoiceRepository,
-  InvoiceService,
-} from './../../services/invoice/invoice';
+import { InvoiceRepository } from './../../services/invoice/invoice';
 import { ConfigModule } from '@nestjs/config/dist/config.module';
 import { EmailService } from './../../services/notification/email/email.service';
 import { RoleRepository } from './../../services/role/roleService';
@@ -20,6 +17,7 @@ import { MulterModule } from '@nestjs/platform-express/multer/multer.module';
 import { AppService } from 'src/services/app/app.service';
 import { BankTransactionRepository } from 'src/services/transaction/transaction.service';
 import { OrganizationService } from 'src/services/organization/organization.services';
+import { InvoiceService } from 'src/services/invoice/invoice-service.service';
 
 const respositories = [
   OrganizationRepository,

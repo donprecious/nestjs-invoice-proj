@@ -1,3 +1,14 @@
+import { EmailDto } from 'src/shared/dto/emailDto';
+import { EmailService } from 'src/services/notification/email/email.service';
+import { getTemplate } from 'src/providers/EmailTemplate/welcome';
+import { roleTypes } from 'src/shared/app/roleTypes';
+import { UserRepository } from 'src/services/user/userService';
+import {
+  buyer,
+  supplier,
+} from './../../../shared/oranization/organizationType';
+import { getSupplierPaymenMessage } from './../../../providers/EmailTemplate/supplierPaymentMessage';
+import { OrganizationService } from 'src/services/organization/organization.services';
 import { invoiceStatus } from './../../../shared/app/invoiceStatus';
 import {
   InvoiceParameter,
@@ -13,10 +24,7 @@ import { In } from 'typeorm/find-options/operator/In';
 
 import { AppResponse } from 'src/shared/helpers/appresponse';
 import { OrganizationRepository } from 'src/services/organization/organizationService';
-import {
-  InvoiceRepository,
-  InvoiceService,
-} from './../../../services/invoice/invoice';
+import { InvoiceRepository } from './../../../services/invoice/invoice';
 import { Invoice } from './../../../entities/invoice.entity';
 import readXlsxFile = require('read-excel-file/node');
 import * as _ from 'lodash';
@@ -58,6 +66,7 @@ import { AllowPermissions } from 'src/shared/guards/permission.decorator';
 import { RolePermissionGuard } from 'src/shared/guards/role-permission.guard';
 import { OrganizationTypeEnum } from 'src/shared/app/organizationType';
 import { invoiceExcelSchema } from './../invoiceExcelSchema';
+import { InvoiceService } from 'src/services/invoice/invoice-service.service';
 
 @UseGuards(JwtAuthGuard, RolePermissionGuard)
 @ApiTags('invoice')
@@ -66,9 +75,12 @@ export class InvoiceController {
   constructor(
     private invoiceRepo: InvoiceRepository,
     private orgRepo: OrganizationRepository,
+    private orgService: OrganizationService,
     private appService: AppService,
     private invoiceService: InvoiceService,
     private configService: ConfigService,
+    private userRepo: UserRepository,
+    private emailService: EmailService,
   ) {}
 
   @ApiHeader({
@@ -194,15 +206,6 @@ export class InvoiceController {
       throw new BadRequestException(
         AppResponse.badRequest('organization not found'),
       );
-
-    // const supplierOrg = await this.orgRepo.findOne({
-    //   where: { id: supplierId },
-    // });
-
-    // if (!supplierOrg)
-    //   throw new BadRequestException(
-    //     AppResponse.badRequest('the supplier organization  is cannot be found'),
-    //   );
 
     console.log(files);
     const file = files[0];
@@ -524,12 +527,24 @@ export class InvoiceController {
     }
     const organization = await this.orgRepo.findOne(param.value);
     console.log(organization);
-    const result = await this.invoiceRepo.GetInvoiceOverview(
+    const invoiceResult = await this.invoiceService.GetInvoiceOverview(
       param.type,
       organization,
       param.dateFilter,
     );
-    return AppResponse.OkSuccess(result);
+    const orgResult = await this.orgService.GetRelatedOrg(
+      param.type,
+      organization,
+      param.dateFilter,
+    );
+    const response = {
+      valueOfInvoice: invoiceResult.valueOfInvoice,
+      numberOfInvoice: invoiceResult.numberOfInvoice,
+      totalOrgCount: orgResult.totalOrgCount,
+      numberOfSuppliers: orgResult.numberOfSuppliers,
+      numberOfBuyers: orgResult.numberOfBuyers,
+    };
+    return AppResponse.OkSuccess(response);
   }
 
   @Put('update-overdue')
@@ -563,6 +578,7 @@ export class InvoiceController {
   ) {
     const invoice = await this.invoiceRepo.findOne({
       where: { id: invoiceId },
+      relations: ['createdByOrganization', 'createdForOrganization'],
     });
     if (!invoice) {
       throw new NotFoundException(AppResponse.NotFound('invoice not found'));
@@ -602,6 +618,24 @@ export class InvoiceController {
       buyerApr,
       invoice.createdByOrganization,
     );
+    const buyer = invoice.createdByOrganization;
+    const supplier = invoice.createdForOrganization;
+
+    const message = getSupplierPaymenMessage(
+      supplier.name,
+      buyer.name,
+      invoice.invoiceNumber,
+      invoice.discountAmount,
+      invoice.amount,
+      invoice.discountAmount,
+    );
+    const body = getTemplate(message);
+    const email = {
+      body: body,
+      subject: `Early Payment  of ${invoice.amount} on  ${invoice.invoiceNumber}`,
+      to: [supplier.email],
+    } as EmailDto;
+    this.emailService.sendEmail(email);
     return AppResponse.OkSuccess(invoice);
   }
 }
