@@ -635,7 +635,8 @@ export class InvoiceController {
       subject: `Early Payment  of ${invoice.amount} on  ${invoice.invoiceNumber}`,
       to: [supplier.email],
     } as EmailDto;
-    this.emailService.sendEmail(email);
+    const mail = await this.emailService.sendEmail(email);
+    console.log(mail);
     return AppResponse.OkSuccess(invoice);
   }
 }
