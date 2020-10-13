@@ -12,7 +12,7 @@ Hello {username},
 const welcomeMessageForUser = `
 Hi {username},
 <br/>
-{inviteeName} has added you to the {companyName} Front Edge account where you can monitor invoicing and payments. Please click the link below to activate your account by entering this OTP {{OTP}}.
+{inviteeName} has added you to the {companyName} Front Edge account where you can monitor invoicing and payments. Please click the link below to activate your account by entering this OTP.
 <br>
 {link}
 <br /><br /> 

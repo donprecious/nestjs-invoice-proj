@@ -22,12 +22,9 @@ import { TerminusModule } from '@nestjs/terminus/dist/terminus.module';
 import { HealthController } from './health/health.controller';
 import { TransactionModule } from './modules/transaction/transaction.module';
 import { TransactionService } from './services/transaction/transaction.service';
-<<<<<<< HEAD
 import { InvoiceService } from './services/invoice/invoice-service.service';
 import { UserService } from './services/user/user.service';
-=======
 import { OkraService } from './modules/transaction/okra.service';
->>>>>>> 6891d060ece5fa32f4b2acc3d75767347e1de4b5
 
 @Module({
   imports: [
@@ -64,12 +61,9 @@ import { OkraService } from './modules/transaction/okra.service';
     AuthService,
     EmailService,
     TransactionService,
-<<<<<<< HEAD
     InvoiceService,
     UserService,
-=======
     OkraService,
->>>>>>> 6891d060ece5fa32f4b2acc3d75767347e1de4b5
   ],
 })
 export class AppModule implements NestModule {
