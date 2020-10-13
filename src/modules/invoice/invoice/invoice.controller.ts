@@ -58,7 +58,7 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/modules/identity/auth/jwtauth.guard';
 import { AnyFilesInterceptor } from '@nestjs/platform-express/multer/interceptors/any-files.interceptor';
-import { Between, FindConditions, MoreThan } from 'typeorm';
+import { Between, FindConditions, MoreThan, LessThan } from 'typeorm';
 import { AppService } from 'src/services/app/app.service';
 import moment = require('moment');
 
@@ -551,9 +551,9 @@ export class InvoiceController {
   async UpdateOverDue() {
     const currentDate = moment().toDate();
     const overDueInvoices = await this.invoiceRepo.find({
-      where: { dueDate: MoreThan(currentDate) },
+      where: { dueDate: LessThan(currentDate), status: invoiceStatus.paid },
     });
-    overDueInvoices.forEach(a => a.status == invoiceStatus.overdue);
+    overDueInvoices.forEach(a => (a.status = invoiceStatus.overdue));
     await this.invoiceRepo.save(overDueInvoices);
     return AppResponse.OkSuccess(overDueInvoices);
   }
@@ -608,10 +608,14 @@ export class InvoiceController {
     }
 
     await this.invoiceRepo.update(invoice.id, invoice);
+
+    console.log(' buyer is ' + invoice.createdByOrganization);
+
     const buyerApr =
-      invoice.createdByOrganization.apr > 0.0
-        ? invoice.createdByOrganization.apr
-        : this.configService.get<number>(ConfigConstant.APR);
+      invoice.createdByOrganization?.apr == null
+        ? this.configService.get<number>(ConfigConstant.APR)
+        : invoice.createdByOrganization?.apr;
+
     await this.invoiceService.ComputeInvoiceDiscountAmount(
       invoice.invoiceNumber,
       invoice.status,

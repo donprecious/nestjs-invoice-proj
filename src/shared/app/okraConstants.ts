@@ -1,0 +1,4 @@
+export const okraCallbackConstants = {
+  PRODUCT_IS_READY: "PRODUCT_IS_READY",
+  INITIAL_TRANSACTION: "INITIAL_TRANSACTION"
+}

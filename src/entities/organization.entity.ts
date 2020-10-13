@@ -51,7 +51,7 @@ export class Organization extends BaseEntity {
   @AutoMap()
   type: string;
 
-  @Column({ default: 'active' })
+  @Column({ default: 'inactive' })
   status: string;
 
   @Column({ nullable: true, type: 'decimal', precision: 5, scale: 2 })

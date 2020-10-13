@@ -47,6 +47,7 @@ import { EmailService } from 'src/services/notification/email/email.service';
 import { EmailDto } from 'src/shared/dto/emailDto';
 import { ConfigConstant } from 'src/shared/constants/ConfigConstant';
 import { getWelcomeMessage } from 'src/providers/EmailTemplate/welcomeMessage';
+import { statusConstant } from 'src/shared/constants/StatusConstant';
 
 @ApiTags('invitation')
 @Controller('invitation')
@@ -155,6 +156,14 @@ export class InvitationController {
         HttpStatus.BAD_REQUEST,
       );
     }
+
+    // TO-DO set invitation to cancel if invitation status is cancelled 
+    
+    
+    // set organization to accepted
+    const org = invite.organization;
+    org.status = statusConstant.active;
+    await this.orgRepo.update(org.id , org);
 
     const updateUser = invite.user;
     const otp = GenerateRandom(10315, 99929);
