@@ -157,13 +157,15 @@ export class InvitationController {
       );
     }
 
-    // TO-DO set invitation to cancel if invitation status is cancelled 
-    
-    
+    // TO-DO set invitation to cancel if invitation status is cancelled
+
     // set organization to accepted
     const org = invite.organization;
-    org.status = statusConstant.active;
-    await this.orgRepo.update(org.id , org);
+    if (updateStatus.status == invitationStatus.accepted) {
+      org.status = statusConstant.active;
+    }
+
+    await this.orgRepo.update(org.id, org);
 
     const updateUser = invite.user;
     const otp = GenerateRandom(10315, 99929);

@@ -1,3 +1,7 @@
+import {
+  roleTypes,
+  getDefaultOrganizationRoleType,
+} from './../../../shared/app/roleTypes';
 import { Organization } from 'src/entities/organization.entity';
 import { RoleAccessableType } from 'src/shared/entity/entityStatus';
 import { UserRepository } from '../../../repositories/user/userRepository';
@@ -102,6 +106,24 @@ export class RoleController {
         ),
       );
     }
+    const currentUser = await this.appService.getCurrentUser();
+    if (
+      currentUser.role.type == roleTypes.buyer ||
+      currentUser.role.type == roleTypes.buyerAdmin ||
+      currentUser.role.type == roleTypes.supplier ||
+      currentUser.role.type == roleTypes.supplierAdmin
+    ) {
+      if (
+        // roleexist.accessiblilty == RoleAccessableType.private &&
+        roleexist.organizationId != currentUser.organization.id
+      ) {
+        throw new BadRequestException(
+          AppResponse.badRequest(
+            `Role Not Found within your organization, cannot be edited`,
+          ),
+        );
+      }
+    }
 
     (roleexist.Name = roleDto.name),
       (roleexist.Description = roleDto.description),
@@ -163,17 +185,18 @@ export class RoleController {
         AppResponse.badRequest('organization not forund'),
       );
     }
+    const orgRoleTypes = getDefaultOrganizationRoleType(organization.type);
     const where: FindConditions<Role>[] = [
       {
         organization: organization,
-        type: organization.type,
+        type: In(orgRoleTypes),
       },
       {
         accessiblilty: In([
           RoleAccessableType.public,
           // RoleAccessableType.private,
         ]),
-        type: organization.type,
+        type: In(orgRoleTypes),
       },
     ];
     if (search && search != '') {

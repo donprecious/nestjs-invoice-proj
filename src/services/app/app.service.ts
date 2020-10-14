@@ -75,6 +75,7 @@ export class AppService {
 
     const user = await this.userRepo.findOne({
       where: { id: loggedUser.userId },
+      relations: ['role', 'organization'],
     });
 
     return user;
