@@ -125,7 +125,7 @@ export class OrganizationController {
     }
 
     org.status = statusConstant.inactive;
-    
+
     await this.orgRepo.insert(org);
 
     if (org.type == organizationType.supplier) {
@@ -327,7 +327,7 @@ export class OrganizationController {
     const message = getWelcomeMessage(
       user.firstName + ' ' + user.lastName,
       link,
-      user.role.type,
+      rolename,
       organization.name,
       '',
       currentUser.firstName + ' ' + currentUser.lastName,
@@ -366,9 +366,10 @@ export class OrganizationController {
         HttpStatus.BAD_REQUEST,
       );
     }
-    
-    
-    const role = await this.roleRepo.findOne({ where: { id: createUser.role } });
+
+    const role = await this.roleRepo.findOne({
+      where: { id: createUser.role },
+    });
 
     if (!role) {
       throw new BadRequestException(AppResponse.badRequest('role not found'));
@@ -391,7 +392,6 @@ export class OrganizationController {
     } as Invitation;
     await this.invitationRepo.save(invitation);
     // todo send email to this user with invitation link]
-    
 
     if (org.status == statusConstant.active) {
       //  create otp and send the user
