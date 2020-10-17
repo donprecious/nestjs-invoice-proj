@@ -107,38 +107,27 @@ export class InvitationController {
       lastName: invite.user.lastName,
       phone: invite.user.phone,
     } as UserDto;
-
-    if (confimationType == roleTypes.supplierAdmin) {
-      const orgInfo = {
-        id: invite.organization.id,
-        address: invite.organization.address,
-        bankNumber: invite.organization.bankNumber,
-        bankcode: invite.organization.bankcode,
-        code: invite.organization.code,
-        email: invite.organization.email,
-        createdOn: invite.organization.createdOn,
-        name: invite.organization.name,
-        phone: invite.organization.phone,
-        taxId: invite.organization.taxId,
-        type: invite.organization.type,
-      } as OrganizationDto;
-
-      invite.organization as OrganizationDto;
-      const response = AppResponse.OkSuccess({
-        org: orgInfo,
-        user: userInfo,
-        confimationType,
-        status: invite.status,
-      });
-      return response;
-    } else {
-      const response = AppResponse.OkSuccess({
-        user: userInfo,
-        confimationType,
-        status: invite.status,
-      });
-      return response;
-    }
+    const orgInfo = {
+      id: invite.organization.id,
+      address: invite.organization.address,
+      bankNumber: invite.organization.bankNumber,
+      bankcode: invite.organization.bankcode,
+      code: invite.organization.code,
+      email: invite.organization.email,
+      createdOn: invite.organization.createdOn,
+      name: invite.organization.name,
+      phone: invite.organization.phone,
+      taxId: invite.organization.taxId,
+      type: invite.organization.type,
+    } as OrganizationDto;
+    invite.organization as OrganizationDto;
+    const response = AppResponse.OkSuccess({
+      org: orgInfo,
+      user: userInfo,
+      confimationType,
+      status: invite.status,
+    });
+    return response;
   }
 
   @Put(':invitationId/update')
