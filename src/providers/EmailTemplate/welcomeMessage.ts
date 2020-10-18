@@ -66,6 +66,6 @@ export const getWelcomeMessage = (
     replaced = _.replace(replaced, '{moreInfo}', ' ');
   }
   replaced = _.replace(replaced, '{inviteeName}', inviteeName);
-  replaced = _.replace(replaced, '{companyName}', inviteeCompaniesName);
+  replaced = _.replace(replaced, /{companyName}/g, inviteeCompaniesName);
   return replaced;
 };
