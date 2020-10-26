@@ -46,7 +46,7 @@ const template = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
                     <tr>
                         <td align="center" style="padding: 1px 0px 1px 0px; margin-top: 60px; color: #153643; font-size: 28px; font-weight: bold; font-family: Arial, sans-serif; height: 300px; background-color: #358EE1;">
                             <img src="https://frontedge-assets.s3-eu-west-1.amazonaws.com/Vector.png" alt="FRONT EDGE " width="62" height="55" style="display: block; padding: 1em; background-color: white; border-radius: 2.6em;" />
-                            <a style="display: block; margin:auto; font-weight: 100; margin-top: 10px; color: white;">WELCOME ON BOARD</a>
+                            <a style="display: block; margin:auto; font-weight: 100; margin-top: 10px; color: white;">{title}</a>
                         </td>
                     </tr>
                     <tr>
@@ -85,8 +85,9 @@ const template = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
     </table>
 </body>
 </html>`;
-export const getTemplate = message => {
+export const getTemplate = (message, title = 'WELCOME ON BOARD') => {
   const temp = template;
-  const replaced = _.replace(temp, '{message}', message);
+  let replaced = _.replace(temp, '{message}', message);
+  replaced = _.replace(replaced, '{title}', title);
   return replaced;
 };

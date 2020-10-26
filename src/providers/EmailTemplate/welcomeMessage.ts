@@ -40,6 +40,15 @@ You are invited to join Early Payment's Program provided by Front Edge. This is 
 {moreInfo}
 
 `;
+const welcomeMessageForAdmin = `
+Hello {username},
+<br /><br />
+You are invited to join SCF Early Payment's Program provided by Front Edge.
+ This is a program where buyers and suppliers can receive accelerated financing on their invoices. In order to get started please click the link below  
+ {link}
+ <br /><br />
+{moreInfo}
+`;
 export const getWelcomeMessage = (
   username,
   link,
@@ -57,6 +66,9 @@ export const getWelcomeMessage = (
   }
   if (type == roleTypes.buyerAdmin) {
     message = welcomeMessageForBuyer;
+  }
+  if (type == roleTypes.admin) {
+    message = welcomeMessageForAdmin;
   }
   let replaced = _.replace(message, '{username}', username);
   replaced = _.replace(replaced, '{link}', link);

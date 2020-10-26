@@ -324,11 +324,15 @@ export class OrganizationController {
     //   <br> click the click below <a href=${inviteUrl}>Activate account</a>
     // `;
     const link = `<a href=${inviteUrl}>${inviteUrl}</a>`;
+    let inviteName = organization.name;
+    if (rolename == roleTypes.buyerAdmin) {
+      inviteName = org.name;
+    }
     const message = getWelcomeMessage(
       user.firstName + ' ' + user.lastName,
       link,
       rolename,
-      organization.name,
+      inviteName,
       '',
       currentUser.firstName + ' ' + currentUser.lastName,
     );

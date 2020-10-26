@@ -19,3 +19,16 @@ export const getDefaultOrganizationRoleType = orgType => {
   }
   return [];
 };
+
+export const getOrganizationAdminRoleType = orgType => {
+  if (orgType == organizationType.buyer || orgType == roleTypes.buyerAdmin) {
+    return roleTypes.buyerAdmin;
+  }
+  if (orgType == organizationType.supplier || roleTypes.supplierAdmin) {
+    return roleTypes.supplierAdmin;
+  }
+  if (orgType == organizationType.admin) {
+    return roleTypes.admin;
+  }
+  return '';
+};
