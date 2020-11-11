@@ -9,8 +9,8 @@ async function bootstrap() {
   app.enableCors({ origin: '*' });
   app.setGlobalPrefix('api/scf');
   const options = new DocumentBuilder()
-    .setTitle('Front edge Service Api')
-    .setDescription('Front edge api ')
+    .setTitle('Frontedge Service Api')
+    .setDescription('Frontedge api')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
