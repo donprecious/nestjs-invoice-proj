@@ -295,4 +295,58 @@ export class InvitationController {
       .subscribe(d => console.log(d));
     return AppResponse.OkSuccess({}, 'invitation sent');
   }
+  @Get('resend')
+  async Resend() {
+    const invites = await this.invitationRepo.find({
+      where: { status: invitationStatus.pending },
+      relations: ['user', 'organization', 'user.role'],
+    });
+
+    for (const invite of invites) {
+      const expiresIn = this.appService.generateInvitationExpireTime().toDate();
+
+      invite.ExpiresIn = expiresIn;
+      invite.status = invitationStatus.pending;
+
+      await this.invitationRepo.update(invite.id, invite);
+      const inviteUrl =
+        this.configService.get(ConfigConstant.frontendUrl) +
+        'join/?inviteId=' +
+        invite.id;
+
+      const link = `<a href=${inviteUrl}>${inviteUrl}</a>`;
+
+      const organizationInvite = await this.orgInviteRepo.findOne({
+        where: { inviteeOrganization: invite.organization },
+        relations: ['invitedByOrganization'],
+      });
+
+      const roleNames = getOrganizationAdminRoleType(invite.user.role.type);
+      let roleType = invite.user.role.type;
+      let inviteeName = organizationInvite.invitedByOrganization.name;
+      if (roleNames == roleTypes.buyerAdmin) {
+        roleType = roleTypes.buyerAdmin;
+        inviteeName = invite.organization.name;
+      }
+
+      const message = getWelcomeMessage(
+        invite.user.firstName + ' ' + invite.user.lastName,
+        link,
+        roleType,
+        inviteeName,
+        ' ',
+      );
+      const template = getTemplate(message);
+      const emailMessage: EmailDto = {
+        to: [invite.user.email],
+        body: template,
+        subject: 'Activate Your Account',
+      };
+      await this.emailSerice
+        .sendEmail(emailMessage)
+        .subscribe(d => console.log(d));
+    }
+
+    return AppResponse.OkSuccess({}, 'invitation sent');
+  }
 }
