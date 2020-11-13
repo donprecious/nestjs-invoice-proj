@@ -1,3 +1,4 @@
+import { getDurationInDays } from './../../shared/helpers/dateUtility';
 import { Injectable } from '@nestjs/common';
 import _ = require('lodash');
 import moment = require('moment');
@@ -20,6 +21,7 @@ export class InvoiceService {
   ) {
     let count = 0;
     let totalDiscountAmountSum = 0;
+    let totalDaysPaidEarily = 0;
     let invoice: Invoice[] = [];
 
     const dateDuration = getDateFromFilter(dateFilter);
@@ -33,7 +35,7 @@ export class InvoiceService {
         where: where,
       });
       invoice = await this.invoiceRepo.find({
-        select: ['discountAmount'],
+        select: ['discountAmount', 'daysPaidEarly'],
         where: where,
       });
     }
@@ -43,23 +45,24 @@ export class InvoiceService {
         where: where,
       });
       invoice = await this.invoiceRepo.find({
-        select: ['discountAmount'],
+        select: ['discountAmount', 'daysPaidEarly'],
         where: where,
       });
     }
     if (orgType == OrganizationTypeEnum.Admin) {
       count = await this.invoiceRepo.count({ where: where });
       invoice = await this.invoiceRepo.find({
-        select: ['discountAmount'],
+        select: ['discountAmount', 'daysPaidEarly'],
         where: where,
       });
     }
     console.log('discountAmount', invoice);
     totalDiscountAmountSum = _.sumBy(invoice, a => Number(a.discountAmount));
-
+    totalDaysPaidEarily = _.sumBy(invoice, a => Number(a.daysPaidEarly));
     const res = {
       valueOfInvoice: totalDiscountAmountSum,
-      numberOfInvoice: count,
+      numberOfInvoice: count, 
+      totalDaysPaidEarily: totalDaysPaidEarily
     };
     return res;
   }
@@ -110,35 +113,23 @@ export class InvoiceService {
     this.invoiceRepo.update(invoice.id, invoice);
     return invoice;
   }
+  async UpdateEarilyPayment(invoiceId) {
+    const invoice = await this.invoiceRepo.findOne({
+      where: { id: invoiceId },
+    });
+    if (invoice) {
+      //PaidEarly  => (Due Date - Invoice Date) - (Paid Date - Invoice Date)
 
-  // async  ComputeInvoiceDiscount(invoiceId, status: string) {
-  //   const invoice = await this.invoiceRepo.findOne({
-  //     where: { id: invoiceId },
-  //     relations: ['createdByOrganization', 'createdForOrganization'],
-  //   });
-  //   if (!invoice) return;
-
-  //   const buyer = invoice.createdByOrganization;
-  //   const supplier = invoice.createdForOrganization;
-  //   let daysOutstanding = 0;
-  //   const creationDate = moment(invoice.createdOn);
-
-  //   if (status == invoiceStatus.pending || status == invoiceStatus.accepted) {
-  //     const duration = moment
-  //       .duration(moment(invoice.dueDate).diff(creationDate))
-  //       .asDays();
-  //     daysOutstanding = Math.abs(duration);
-  //   } else {
-  //     const duration = moment
-  //       .duration(moment(invoice.paymentDate).diff(creationDate))
-  //       .asDays();
-  //     daysOutstanding = Math.abs(duration);
-  //   }
-  //   const discountAmount =
-  //     invoice.amount -
-  //     invoice.amount * (daysOutstanding / 365) * (Number(supplier.apr) / 100);
-  //   invoice.discountAmount = discountAmount;
-  //   this.invoiceRepo.update(invoice.id, invoice);
-  //   return invoice;
-  // }
+      const dueDateDiff = getDurationInDays(invoice.dueDate, invoice.createdOn);
+      const paidDateDiff = getDurationInDays(
+        invoice.paymentDate,
+        invoice.createdOn,
+      );
+      const eariyPayment = dueDateDiff - paidDateDiff;
+      invoice.daysPaidEarly = eariyPayment;
+      await this.invoiceRepo.update(invoice.id, invoice);
+      return eariyPayment;
+    }
+    return null;
+  }
 }

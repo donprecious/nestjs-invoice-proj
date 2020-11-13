@@ -52,3 +52,8 @@ export const getDateFromFilter = (
       break;
   }
 };
+
+export const getDurationInDays = (date1, date2) => {
+  const duration = moment.duration(moment(date1).diff(date2)).asDays();
+  return Math.abs(duration);
+};

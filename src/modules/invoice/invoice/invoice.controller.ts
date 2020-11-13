@@ -540,6 +540,7 @@ export class InvoiceController {
     const response = {
       valueOfInvoice: invoiceResult.valueOfInvoice,
       numberOfInvoice: invoiceResult.numberOfInvoice,
+      totalDaysPaidEarily: invoiceResult.totalDaysPaidEarily,
       totalOrgCount: orgResult.totalOrgCount,
       numberOfSuppliers: orgResult.numberOfSuppliers,
       numberOfBuyers: orgResult.numberOfBuyers,
@@ -608,6 +609,8 @@ export class InvoiceController {
     }
 
     await this.invoiceRepo.update(invoice.id, invoice);
+
+    await this.invoiceService.UpdateEarilyPayment(invoice.id);
 
     console.log(' buyer is ' + invoice.createdByOrganization);
 

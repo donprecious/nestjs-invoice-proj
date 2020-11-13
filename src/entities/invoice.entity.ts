@@ -28,6 +28,9 @@ export class Invoice extends BaseEntity {
   @Column({ nullable: true, default: 'accepted' })
   status: string;
 
+  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
+  daysPaidEarly: number;
+
   @ManyToOne(type => Organization)
   createdForOrganization: Organization;
 
