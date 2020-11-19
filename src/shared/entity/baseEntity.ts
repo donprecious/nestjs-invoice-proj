@@ -1,6 +1,6 @@
 import { PrimaryGeneratedColumn } from 'typeorm/decorator/columns/PrimaryGeneratedColumn';
 import { Column } from 'typeorm/decorator/columns/Column';
-import { Timestamp } from 'typeorm';
+import { BeforeUpdate, Timestamp } from 'typeorm';
 import { AutoMap } from 'nestjsx-automapper';
 
 export class BaseEntity {
@@ -32,4 +32,9 @@ export class BaseEntity {
   /**
    *
    */
+
+  @BeforeUpdate()
+  updateDates() {
+    this.updatedOn = new Date();
+  }
 }

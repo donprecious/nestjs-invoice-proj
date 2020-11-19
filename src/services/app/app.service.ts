@@ -104,4 +104,15 @@ export class AppService {
     const timeToExpire = moment().add(duration, 'minutes');
     return timeToExpire;
   }
+
+  generateOtpExpireTime(): Moment {
+    let duration = this.configService.get<number>(
+      ConfigConstant.otpExpireTimeInMintues,
+    );
+    if (!duration) {
+      duration = 10;
+    }
+    const timeToExpire = moment().add(duration, 'minutes');
+    return timeToExpire;
+  }
 }

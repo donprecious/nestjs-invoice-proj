@@ -382,8 +382,10 @@ export class OrganizationController {
     user.organization = org;
     const otp = GenerateRandom(10315, 99929);
     user.otp = otp;
-    const expiretime = moment().add(20, 'minutes');
-    user.otpExpiresIn = expiretime.toDate();
+
+    const expiretime = this.appService.generateOtpExpireTime().toDate();
+
+    user.otpExpiresIn = expiretime;
     await this.userRepo.insert(user);
     const expiresIn = this.appService.generateInvitationExpireTime().toDate();
     const invitation = {

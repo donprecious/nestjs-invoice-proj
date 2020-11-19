@@ -1,3 +1,4 @@
+import { getDurationInDays } from './../../../shared/helpers/dateUtility';
 import { EmailDto } from 'src/shared/dto/emailDto';
 import { EmailService } from 'src/services/notification/email/email.service';
 import { getTemplate } from 'src/providers/EmailTemplate/welcome';
@@ -154,6 +155,15 @@ export class InvoiceController {
     const invoices = [] as Invoice[];
 
     for (const row of createInvoices.invoices) {
+      const supplier = uniqueOrganizations.find(
+        a => a.code == row.supplierCode,
+      );
+      const tenor = getDurationInDays(
+        row.dueDate,
+        moment()
+          .toDate()
+          .toString(),
+      );
       const invoice = {
         amount: row.amount,
         invoiceNumber: row.invoiceNumber,
@@ -165,6 +175,8 @@ export class InvoiceController {
         createdForOrganization: uniqueOrganizations.find(
           a => a.code == row.supplierCode,
         ),
+        apr: supplier.apr,
+        tenor: tenor,
       } as Invoice;
       invoices.push(invoice);
     }
@@ -279,6 +291,15 @@ export class InvoiceController {
     const invoices: Invoice[] = [];
 
     for (const row of result.rows) {
+      const supplier = uniqueOrganizations.find(
+        a => a.code == row.supplierCode,
+      );
+      const tenor = getDurationInDays(
+        row.dueDate,
+        moment()
+          .toDate()
+          .toString(),
+      );
       const invoice = {
         amount: row.amount,
         discountAmount: 0.9 * row.amount,
@@ -290,6 +311,8 @@ export class InvoiceController {
         createdForOrganization: uniqueOrganizations.find(
           a => a.code == row.supplierCode,
         ),
+        apr: supplier.apr,
+        tenor: tenor,
       } as Invoice;
       invoices.push(invoice);
     }
@@ -607,7 +630,10 @@ export class InvoiceController {
       }
       invoice.paymentDate = updatePaymentDate.paymentDate;
     }
-
+    const tenor = getDurationInDays(invoice.dueDate, invoice.paymentDate);
+    invoice.tenor = tenor;
+    const currentUser = await this.appService.getCurrentUser();
+    invoice.updatedBy = currentUser?.id;
     await this.invoiceRepo.update(invoice.id, invoice);
 
     await this.invoiceService.UpdateEarilyPayment(invoice.id);
@@ -627,14 +653,14 @@ export class InvoiceController {
     );
     const buyer = invoice.createdByOrganization;
     const supplier = invoice.createdForOrganization;
-
+    const currencyCode = invoice.currencyCode;
     const message = getSupplierPaymenMessage(
       supplier.name,
       buyer.name,
       invoice.invoiceNumber,
-      invoice.discountAmount.toLocaleString(),
-      invoice.amount.toLocaleString(),
-      invoice.discountAmount.toLocaleString(),
+      currencyCode + ' ' + invoice.discountAmount.toLocaleString(),
+      currencyCode + ' ' + invoice.amount.toLocaleString(),
+      currencyCode + ' ' + invoice.discountAmount.toLocaleString(),
     );
     const body = getTemplate(message, 'Congratulations Early Payment Received');
     const email = {

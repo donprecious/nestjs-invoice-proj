@@ -31,6 +31,12 @@ export class Invoice extends BaseEntity {
   @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
   daysPaidEarly: number;
 
+  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
+  apr: number;
+
+  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
+  tenor: number;
+
   @ManyToOne(type => Organization)
   createdForOrganization: Organization;
 
