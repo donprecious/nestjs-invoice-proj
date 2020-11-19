@@ -654,13 +654,15 @@ export class InvoiceController {
     const buyer = invoice.createdByOrganization;
     const supplier = invoice.createdForOrganization;
     const currencyCode = invoice.currencyCode;
+    const discountedAmount = invoice.amount - invoice.discountAmount;
     const message = getSupplierPaymenMessage(
       supplier.name,
       buyer.name,
       invoice.invoiceNumber,
-      currencyCode + ' ' + invoice.discountAmount.toLocaleString(),
+      currencyCode + ' ' + discountedAmount.toLocaleString(),
       currencyCode + ' ' + invoice.amount.toLocaleString(),
-      currencyCode + ' ' + invoice.discountAmount.toLocaleString(),
+      invoice.apr,
+      invoice.tenor,
     );
     const body = getTemplate(message, 'Congratulations Early Payment Received');
     const email = {
