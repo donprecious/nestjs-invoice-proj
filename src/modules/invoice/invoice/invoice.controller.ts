@@ -659,17 +659,29 @@ export class InvoiceController {
       supplier.name,
       buyer.name,
       invoice.invoiceNumber,
-      currencyCode + ' ' + discountedAmount.toLocaleString(),
-      currencyCode + ' ' + invoice.amount.toLocaleString(),
-      invoice.apr,
-      invoice.tenor,
+      currencyCode +
+        ' ' +
+        new Intl.NumberFormat('en-IN', { maximumSignificantDigits: 3 }).format(
+          discountedAmount,
+        ),
+      currencyCode +
+        ' ' +
+        new Intl.NumberFormat('en-IN', { maximumSignificantDigits: 3 }).format(
+          invoice.amount,
+        ),
+      invoice.apr ? Number.parseFloat(invoice.apr?.toString()).toFixed(2) : 0,
+      invoice.tenor
+        ? Number.parseFloat(invoice.tenor?.toString()).toFixed(2)
+        : 0,
     );
     const body = getTemplate(message, 'Congratulations Early Payment Received');
     const email = {
       body: body,
-      subject: `Early Payment  of ${invoice.amount.toLocaleString()} on  ${
-        invoice.invoiceNumber
-      }`,
+      subject: `Early Payment  of ${
+        invoice.currencyCode
+      } ${new Intl.NumberFormat('en-IN', {
+        maximumSignificantDigits: 3,
+      }).format(invoice.amount)} on  ${invoice.invoiceNumber}`,
       to: [supplier.email],
     } as EmailDto;
     const mail = await this.emailService.sendEmail(email).toPromise();

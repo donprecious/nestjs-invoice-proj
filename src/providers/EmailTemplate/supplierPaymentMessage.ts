@@ -4,17 +4,19 @@ const supplierPaymentMessage = `
 Congratulations {username}! Your invoice number: <b> {invoiceNo} </b> for {buyerName} has been paid early for {payoutAmount} by Front Edge.
 <br>
 <strong>Transaction Breakdown </strong> <br> 
-X
+X<br/>
 Invoice Amount: {invoiceAmount} <br>  
-X
+X<br/>
   
 Days Financed: {tenor} <br>  
-X
+X<br/>
 Daily Rate: {apr} <br> 
 X 
-
-_____________________________
-Discount Amount: {discount}
+<br/>
+_____________________________ 
+<br/>
+Discount Amount: {discount} 
+<br/>
 `;
 
 export const getSupplierPaymenMessage = (
