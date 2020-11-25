@@ -75,4 +75,8 @@ export class InvoiceFilter {
   buyerCode?: string;
   supplierName?: string;
   buyerName?: string;
+
+  status?: string;
+
+  expiring?: number;
 }

@@ -59,7 +59,13 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/modules/identity/auth/jwtauth.guard';
 import { AnyFilesInterceptor } from '@nestjs/platform-express/multer/interceptors/any-files.interceptor';
-import { Between, FindConditions, MoreThan, LessThan } from 'typeorm';
+import {
+  Between,
+  FindConditions,
+  MoreThan,
+  LessThan,
+  MoreThanOrEqual,
+} from 'typeorm';
 import { AppService } from 'src/services/app/app.service';
 import moment = require('moment');
 
@@ -422,6 +428,13 @@ export class InvoiceController {
 
       where1.discountAmount = filter.discountAmount;
     }
+    if (filter.expiring) {
+      // where.push({ discountAmount: filter.discountAmount });
+      const expireIn = moment()
+        .add(filter.expiring, 'days')
+        .toDate();
+      where1.dueDate = MoreThanOrEqual(expireIn);
+    }
 
     if (filter.fromDiscountAmount && filter.toDiscountAmount) {
       where.push({
@@ -442,6 +455,10 @@ export class InvoiceController {
       where1.invoiceNumber = filter.invoiceNumber;
       // where.push({ invoiceNumber: filter.invoiceNumber });
     }
+    if (filter.status) {
+      where1.status = filter.status;
+      // where.push({ invoiceNumber: filter.invoiceNumber });
+    }
 
     if (filter.supplierCode) {
       const supplier = await this.orgRepo.findOne({
@@ -452,6 +469,7 @@ export class InvoiceController {
         where1.createdForOrganization = supplier;
       }
     }
+
     if (filter.buyerCode) {
       const buyer = await this.orgRepo.findOne({
         where: { code: filter.buyerCode },
@@ -501,18 +519,8 @@ export class InvoiceController {
           moment(filter.toDueDate).format('DD-MM-YYYY'),
         ).format();
         where1.dueDate = Between(fromDate, toDate);
-
-        // where.push({ dueDate: Between(fromDate, toDate) });
       }
     }
-
-    // todo uncomment when entity has payment date
-    //   if(filter.paymentDate){
-    //     if(moment(filter.paymentDate).isValid()){
-    //       const date = moment(moment(filter.paymentDate).format('YYYY MM DD')).toDate();
-    //       where.paymentDate = date;
-    //    }
-    //  }
 
     const result = await this.invoiceRepo.findAndCount({
       relations: ['createdByOrganization', 'createdForOrganization'],
