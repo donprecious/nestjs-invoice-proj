@@ -1,7 +1,9 @@
+import { InvoiceChangeLog } from './invoiceChangeLog.entity';
 import { Organization } from './organization.entity';
 import { User } from './User.entity';
 import { BaseEntity } from '../shared/entity/baseEntity';
 import { Entity, Column, ManyToOne } from 'typeorm';
+import { OneToMany } from 'typeorm/decorator/relations/OneToMany';
 
 @Entity()
 export class Invoice extends BaseEntity {
@@ -37,9 +39,21 @@ export class Invoice extends BaseEntity {
   @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
   tenor: number;
 
-  @ManyToOne(type => Organization)
+  @ManyToOne(
+    type => Organization,
+    organization => organization.supplier,
+  )
   createdForOrganization: Organization;
 
-  @ManyToOne(type => Organization)
+  @ManyToOne(
+    type => Organization,
+    organization => organization.buyer,
+  )
   createdByOrganization: Organization;
+
+  @OneToMany(
+    () => InvoiceChangeLog,
+    invoiceChangeLog => invoiceChangeLog.invoice,
+  )
+  invoiceChangeLogs: InvoiceChangeLog[];
 }

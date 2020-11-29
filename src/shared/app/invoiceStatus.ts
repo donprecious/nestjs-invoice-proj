@@ -5,4 +5,5 @@ export enum invoiceStatus {
   outstanding = 'outstanding',
   overdue = 'overdue',
   settled = 'settled',
+  expiring = 'expiring',
 }

@@ -1,3 +1,4 @@
+import { InvoiceChangeLogRepository } from './../../repositories/invoice/invoiceChangeLogRepository';
 import { UserService } from './../../services/user/user.service';
 import { InvoiceRepository } from '../../repositories/invoice/invoiceRepository';
 import { ConfigModule } from '@nestjs/config/dist/config.module';
@@ -39,6 +40,7 @@ const respositories = [
       InvitationRepository,
       InvoiceRepository,
       BankTransactionRepository,
+      InvoiceChangeLogRepository,
     ]),
     HttpModule,
     ConfigModule,

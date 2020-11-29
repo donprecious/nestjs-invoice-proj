@@ -1,3 +1,4 @@
+import { supplier } from './../shared/oranization/organizationType';
 import { type } from 'os';
 
 import { Address } from './../dto/organization/organization.dto';
@@ -9,6 +10,7 @@ import { Type } from 'class-transformer';
 import { organizationStatus } from 'src/shared/app/organizationStatus';
 import { User } from './User.entity';
 import { Role } from './Role.entity';
+import { Invoice } from './invoice.entity';
 
 @Entity()
 export class Organization extends BaseEntity {
@@ -71,4 +73,15 @@ export class Organization extends BaseEntity {
     user => user.organization,
   )
   users: User[];
+
+  @OneToMany(
+    type => Invoice,
+    invoice => invoice.createdByOrganization,
+  )
+  buyer: Invoice[];
+  @OneToMany(
+    type => Invoice,
+    invoice => invoice.createdForOrganization,
+  )
+  supplier: Invoice[];
 }
