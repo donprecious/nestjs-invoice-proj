@@ -1,3 +1,5 @@
+import { endOfDay } from 'date-fns';
+import { InvoiceChangeLogRepository } from './../../../repositories/invoice/invoiceChangeLogRepository';
 import { getDurationInDays } from './../../../shared/helpers/dateUtility';
 import { EmailDto } from 'src/shared/dto/emailDto';
 import { EmailService } from 'src/services/notification/email/email.service';
@@ -74,6 +76,7 @@ import { RolePermissionGuard } from 'src/shared/guards/role-permission.guard';
 import { OrganizationTypeEnum } from 'src/shared/app/organizationType';
 import { invoiceExcelSchema } from './../invoiceExcelSchema';
 import { InvoiceService } from 'src/services/invoice/invoice-service.service';
+import { InvoiceChangeLog } from 'src/entities/invoiceChangeLog.entity';
 
 @UseGuards(JwtAuthGuard, RolePermissionGuard)
 @ApiTags('invoice')
@@ -88,6 +91,7 @@ export class InvoiceController {
     private configService: ConfigService,
     private userRepo: UserRepository,
     private emailService: EmailService,
+    private invoiceChangeLogRepository: InvoiceChangeLogRepository,
   ) {}
 
   @ApiHeader({
@@ -272,7 +276,7 @@ export class InvoiceController {
       // the fellowing existing code already exist
       throw new BadRequestException(
         AppResponse.badRequest(
-          'the following invoice number already exist,invoice number/s ' +
+          'The following invoice number already exist,invoice number /s' +
             duplicateExistingCode,
         ),
       );
@@ -430,10 +434,11 @@ export class InvoiceController {
     }
     if (filter.expiring) {
       // where.push({ discountAmount: filter.discountAmount });
-      const expireIn = moment()
-        .add(filter.expiring, 'days')
-        .toDate();
-      where1.dueDate = MoreThanOrEqual(expireIn);
+
+      const expireIn = moment().add(filter.expiring, 'days');
+      const fromDate = expireIn.startOf('day').toDate();
+      const toDate = expireIn.endOf('day').toDate();
+      where1.dueDate = Between(fromDate, toDate);
     }
 
     if (filter.fromDiscountAmount && filter.toDiscountAmount) {
@@ -584,9 +589,30 @@ export class InvoiceController {
     const currentDate = moment().toDate();
     const overDueInvoices = await this.invoiceRepo.find({
       where: { dueDate: LessThan(currentDate), status: invoiceStatus.paid },
+      relations: ['createdByOrganization', 'createdForOrganization'],
     });
     overDueInvoices.forEach(a => (a.status = invoiceStatus.overdue));
     await this.invoiceRepo.save(overDueInvoices);
+
+    const changeLogs: InvoiceChangeLog[] = overDueInvoices.map(invoice => {
+      const changeLog = {
+        invoiceId: invoice.id,
+        changeAmount: invoice.amount,
+        discountAmount: invoice.discountAmount,
+        invoiceNumber: invoice.invoiceNumber,
+        changeMonth: moment().month(),
+        changeYear: moment().year(),
+        changeWeekInYear: moment().weeks(),
+        statusFrom: invoice.status,
+        statusTo: invoice.status,
+        invoiceAmount: invoice.amount,
+        buyerCode: invoice.createdByOrganization.code,
+        supplierCode: invoice.createdForOrganization.code,
+      } as InvoiceChangeLog;
+      return changeLog;
+    });
+
+    await this.invoiceChangeLogRepository.save(changeLogs);
     return AppResponse.OkSuccess(overDueInvoices);
   }
 
@@ -615,7 +641,7 @@ export class InvoiceController {
     if (!invoice) {
       throw new NotFoundException(AppResponse.NotFound('invoice not found'));
     }
-
+    const oldChangeInvoice = invoice;
     invoice.paymentReference = updatePaymentDate.paymentReference;
     invoice.status = invoiceStatus.paid;
 
@@ -653,7 +679,7 @@ export class InvoiceController {
         ? this.configService.get<number>(ConfigConstant.APR)
         : invoice.createdByOrganization?.apr;
 
-    await this.invoiceService.ComputeInvoiceDiscountAmount(
+    const updateInvoiceDiscount = await this.invoiceService.ComputeInvoiceDiscountAmount(
       invoice.invoiceNumber,
       invoice.status,
       buyerApr,
@@ -662,7 +688,8 @@ export class InvoiceController {
     const buyer = invoice.createdByOrganization;
     const supplier = invoice.createdForOrganization;
     const currencyCode = invoice.currencyCode;
-    const discountedAmount = invoice.amount - invoice.discountAmount;
+    const discountedAmount =
+      updateInvoiceDiscount.amount - updateInvoiceDiscount.discountAmount;
     const message = getSupplierPaymenMessage(
       supplier.name,
       buyer.name,
@@ -670,8 +697,14 @@ export class InvoiceController {
       currencyCode +
         ' ' +
         new Intl.NumberFormat('en-IN', { maximumSignificantDigits: 3 }).format(
+          updateInvoiceDiscount.discountAmount,
+        ),
+      currencyCode +
+        ' ' +
+        new Intl.NumberFormat('en-IN', { maximumSignificantDigits: 3 }).format(
           discountedAmount,
         ),
+
       currencyCode +
         ' ' +
         new Intl.NumberFormat('en-IN', { maximumSignificantDigits: 3 }).format(
@@ -694,6 +727,22 @@ export class InvoiceController {
     } as EmailDto;
     const mail = await this.emailService.sendEmail(email).toPromise();
     console.log(mail);
+
+    const changeLog = {
+      invoiceId: updateInvoiceDiscount.id,
+      changeAmount: updateInvoiceDiscount.amount,
+      discountAmount: updateInvoiceDiscount.discountAmount,
+      invoiceNumber: updateInvoiceDiscount.invoiceNumber,
+      changeMonth: moment().month(),
+      changeYear: moment().year(),
+      changeWeekInYear: moment().weeks(),
+      statusFrom: oldChangeInvoice.status,
+      statusTo: invoice.status,
+      invoiceAmount: updateInvoiceDiscount.amount,
+      buyerCode: invoice.createdByOrganization.code,
+      supplierCode: invoice.createdForOrganization.code,
+    } as InvoiceChangeLog;
+    await this.invoiceChangeLogRepository.save(changeLog);
     return AppResponse.OkSuccess(invoice);
   }
 }

@@ -16,6 +16,10 @@ X
 _____________________________ 
 <br/>
 Discount Amount: {discount} 
+<br/> 
+
+<br/>
+Payout Amount: {payoutAmount} 
 <br/>
 `;
 
@@ -24,6 +28,7 @@ export const getSupplierPaymenMessage = (
   buyerName,
   invoiceNo,
   payoutAmount,
+  discountedAmount,
   invoiceAmount,
   apr,
   tenor,
@@ -35,7 +40,7 @@ export const getSupplierPaymenMessage = (
   replaced = _.replace(replaced, '{buyerName}', buyerName);
   replaced = _.replace(replaced, '{payoutAmount}', payoutAmount);
   replaced = _.replace(replaced, '{invoiceAmount}', invoiceAmount);
-  replaced = _.replace(replaced, '{discount}', payoutAmount);
+  replaced = _.replace(replaced, '{discount}', discountedAmount);
   replaced = _.replace(replaced, '{apr}', apr);
   replaced = _.replace(replaced, '{tenor}', tenor);
   return replaced;
