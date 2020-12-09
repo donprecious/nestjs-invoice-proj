@@ -696,20 +696,16 @@ export class InvoiceController {
       invoice.invoiceNumber,
       currencyCode +
         ' ' +
-        new Intl.NumberFormat('en-IN', { maximumSignificantDigits: 3 }).format(
+        new Intl.NumberFormat('en-IN').format(
           updateInvoiceDiscount.discountAmount,
         ),
       currencyCode +
         ' ' +
-        new Intl.NumberFormat('en-IN', { maximumSignificantDigits: 3 }).format(
-          discountedAmount,
-        ),
+        new Intl.NumberFormat('en-IN').format(discountedAmount),
 
       currencyCode +
         ' ' +
-        new Intl.NumberFormat('en-IN', { maximumSignificantDigits: 3 }).format(
-          invoice.amount,
-        ),
+        new Intl.NumberFormat('en-IN').format(invoice.amount),
       invoice.apr ? Number.parseFloat(invoice.apr?.toString()).toFixed(2) : 0,
       invoice.tenor
         ? Number.parseFloat(invoice.tenor?.toString()).toFixed(2)
