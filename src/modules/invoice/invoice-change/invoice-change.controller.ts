@@ -31,7 +31,7 @@ export class InvoiceChangeController {
       in14DaysDate.endOf('day').toDate(),
     );
     const expiringInvoices = await this.invoiceRepo.find({
-      where: { dueDate: duration },
+      where: { dueDate: duration, status: invoiceStatus.paid },
       relations: ['createdByOrganization', 'createdForOrganization'],
     });
 
