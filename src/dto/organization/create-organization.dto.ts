@@ -30,6 +30,7 @@ export class CreateOrganizationDto {
   discountRatio: number;
 }
 
+
 export class EditOrganizationDto {
   @IsNotEmpty()
   name: string;

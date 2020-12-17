@@ -51,7 +51,7 @@ import { ApiTags } from '@nestjs/swagger/dist/decorators/api-use-tags.decorator'
 import { Organization } from 'src/entities/organization.entity';
 import { User } from 'src/entities/User.entity';
 import { UserRepository } from 'src/repositories/user/userRepository';
-import { ApiHeader } from '@nestjs/swagger/dist';
+import { ApiBearerAuth, ApiBody, ApiHeader } from '@nestjs/swagger/dist';
 import { CreateOrganizationDto } from 'src/dto/organization/create-organization.dto';
 import { ConfigService } from '@nestjs/config';
 import { EmailService } from 'src/services/notification/email/email.service';
@@ -59,10 +59,13 @@ import { ConfigConstant } from 'src/shared/constants/ConfigConstant';
 import { EmailDto } from 'src/shared/dto/emailDto';
 import { JwtAuthGuard } from 'src/modules/identity/auth/jwtauth.guard';
 import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception';
-import { FindConditions, Like } from 'typeorm';
+import { FindConditions, Like, In } from 'typeorm';
 import { GetRoleDto } from 'src/dto/role/role.dto';
 import { OrganizationService } from 'src/services/organization/organization.services';
 import moment = require('moment');
+import * as _ from 'lodash';
+
+@ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolePermissionGuard)
 @ApiTags('organization')
 @Controller('organization')
@@ -592,6 +595,187 @@ export class OrganizationController {
     } as UserDto;
 
     return AppResponse.OkSuccess(user);
+  }
+
+  @ApiBody({ type: [CreateOrganizationUserDto] })
+  @Post('users/many')
+  async PostCreateManyOrganization(
+    @Query('buyerId') buyerId: string,
+    @Body() createUserOrgs: CreateOrganizationUserDto[],
+  ) {
+    if (!buyerId) {
+      throw new BadRequestException(
+        AppResponse.badRequest(`buyerId must have a value`),
+      );
+    }
+
+    const buyerOrg = await this.orgRepo.findOne({ where: { id: buyerId } });
+    if (!buyerOrg) {
+      throw new BadRequestException(
+        AppResponse.badRequest(`buyer with id ${buyerId} does not exist`),
+      );
+    }
+
+    // validate duplicate org code
+    const orgCodes = createUserOrgs.map(a => a.organization.code);
+
+    const duplicatedOrg = _.filter(orgCodes, (val, i, iteratee) =>
+      _.includes(iteratee, val, Number(i) + 1),
+    );
+    if (duplicatedOrg.length > 0) {
+      throw new BadRequestException(
+        AppResponse.badRequest(
+          'duplicate organisation code(s) found [] ' + duplicatedOrg,
+        ),
+      );
+    }
+    // validate duplicate user emails
+    const orgEmails = createUserOrgs.map(a => a.organization.email);
+
+    const orgUserEmails = _.filter(orgEmails, (val, i, iteratee) =>
+      _.includes(iteratee, val, Number(i) + 1),
+    );
+    if (orgUserEmails.length > 0) {
+      throw new BadRequestException(
+        AppResponse.badRequest(
+          'duplicate organisation email(s)  found [] ' + orgUserEmails,
+        ),
+      );
+    }
+
+    //check for existing org email
+    const findOrgEmails = await this.orgRepo.find({
+      where: { email: In(orgEmails) },
+    });
+    if (findOrgEmails.length > 0) {
+      const existingOrgEmail = findOrgEmails.map(a => a.email);
+      throw new BadRequestException(
+        AppResponse.badRequest(
+          'exisiting  organization email(s) found [] ' + existingOrgEmail,
+        ),
+      );
+    }
+
+    // check existing org
+    const existingOrg = await this.orgRepo.find({
+      where: { code: In(orgCodes) },
+    });
+    if (existingOrg.length > 0) {
+      const existingcode = existingOrg.map(a => a.code);
+      throw new BadRequestException(
+        AppResponse.badRequest(
+          'organisations  with this code(s) already exist found [] ' +
+            existingcode,
+        ),
+      );
+    }
+
+    // validate duplicate user emails
+    const userEmails = createUserOrgs.map(a => a.user.email);
+
+    const duplicatedUserEmails = _.filter(userEmails, (val, i, iteratee) =>
+      _.includes(iteratee, val, Number(i) + 1),
+    );
+    if (duplicatedUserEmails.length > 0) {
+      throw new BadRequestException(
+        AppResponse.badRequest(
+          'duplicate user email  found [] ' + duplicatedUserEmails,
+        ),
+      );
+    }
+
+    //check for existing email
+    const findEmails = await this.userRepo.find({
+      where: { email: In(userEmails) },
+    });
+    if (findEmails.length > 0) {
+      const existingEmail = findEmails.map(a => a.email);
+      throw new BadRequestException(
+        AppResponse.badRequest(
+          'exisiting  user email(s) found [] ' + existingEmail,
+        ),
+      );
+    }
+
+    const rolename = roleTypes.supplierAdmin;
+
+    const role = await this.roleRepo.findOne({ where: { Name: rolename } });
+    const invitedByUser = await this.userRepo.findOne({
+      where: { organization: buyerOrg },
+    });
+    // if (!role) {
+    //   throw new BadRequestException(
+    //     AppResponse.badRequest(
+    //       `organization type is not recognized and cannot be assigned a role, or the role ${rolename} does not exist`,
+    //     ),
+    //   );
+    // }
+    for (const orgs of createUserOrgs) {
+      const user = (orgs.user as unknown) as User;
+      const org = (orgs.organization as unknown) as Organization;
+
+      if (orgs.organization.apr) {
+        org.apr = orgs.organization.apr;
+      } else {
+        const apr = this.configService.get<number>(ConfigConstant.APR);
+        if (apr) {
+          org.apr = apr;
+        }
+      }
+
+      await this.orgRepo.insert(org);
+      user.organization = org;
+      user.role = role;
+
+      await this.userRepo.save(user);
+
+      const orgInvite = {
+        invitedByOrganization: buyerOrg,
+        inviteeOrganization: org,
+      } as OrganizationInvite;
+
+      this.orgInvite.save(orgInvite);
+
+      const expiresIn = this.appService.generateInvitationExpireTime().toDate();
+      const invitation = {
+        invitedByUser: invitedByUser, // update to current loggedin user
+        confirmationType: rolename,
+        organization: org,
+        status: invitationStatus.pending,
+        user: user,
+        ExpiresIn: expiresIn,
+      } as Invitation;
+      await this.invitationRepo.save(invitation);
+
+      const inviteUrl =
+        this.configService.get(ConfigConstant.frontendUrl) +
+        'join/?inviteId=' +
+        invitation.id;
+      // const message = `Hello You have been invited to Verify and Activate your account
+      //   <br> click the click below <a href=${inviteUrl}>Activate account</a>
+      // `;
+      const link = `<a href=${inviteUrl}>${inviteUrl}</a>`;
+      let inviteName = buyerOrg.name;
+      if (rolename == roleTypes.buyerAdmin) {
+        inviteName = org.name;
+      }
+      const message = getWelcomeMessage(
+        user.firstName + ' ' + user.lastName,
+        link,
+        rolename,
+        inviteName,
+        '',
+        invitedByUser.firstName + ' ' + invitedByUser.lastName,
+      );
+      const template = getTemplate(message);
+      const emailMessage: EmailDto = {
+        to: [user.email],
+        body: template,
+        subject: 'Invitation ',
+      };
+      this.emailSerice.sendEmail(emailMessage).subscribe(d => console.log(d));
+    }
+    return AppResponse.OkSuccess(createUserOrgs);
   }
 
   @AllowPermissions(SupplierPermissions.viewBuyers, BuyerPermissions.ViewBuyer)

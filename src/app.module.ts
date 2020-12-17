@@ -25,6 +25,7 @@ import { TransactionService } from './services/transaction/transaction.service';
 import { InvoiceService } from './services/invoice/invoice-service.service';
 import { UserService } from './services/user/user.service';
 import { OkraService } from './modules/transaction/okra.service';
+import { InvoiceChangeLogService } from './services/invoice-change-log/invoice-change-log.service';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { OkraService } from './modules/transaction/okra.service';
     InvoiceService,
     UserService,
     OkraService,
+    InvoiceChangeLogService,
   ],
 })
 export class AppModule implements NestModule {

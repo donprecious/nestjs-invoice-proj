@@ -20,6 +20,7 @@ import { AppService } from 'src/services/app/app.service';
 import { BankTransactionRepository } from 'src/repositories/BankTransaction/bankTransactionRepository';
 import { OrganizationService } from 'src/services/organization/organization.services';
 import { InvoiceService } from 'src/services/invoice/invoice-service.service';
+import { InvoiceChangeLogService } from 'src/services/invoice-change-log/invoice-change-log.service';
 
 const respositories = [
   OrganizationRepository,
@@ -61,6 +62,7 @@ const respositories = [
     OrganizationService,
     InvoiceService,
     UserService,
+    InvoiceChangeLogService,
   ],
   providers: [
     EmailService,
@@ -70,6 +72,7 @@ const respositories = [
     OrganizationService,
     InvoiceService,
     UserService,
+    InvoiceChangeLogService,
   ],
 })
 export class SharedModule {}

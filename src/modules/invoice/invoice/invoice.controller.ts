@@ -39,6 +39,7 @@ import {
   InvoiceFilter,
 } from './../../../dto/invoice/create-invoice.dto';
 import {
+  ApiBearerAuth,
   ApiConsumes,
   ApiHeader,
   ApiTags,
@@ -77,7 +78,9 @@ import { OrganizationTypeEnum } from 'src/shared/app/organizationType';
 import { invoiceExcelSchema } from './../invoiceExcelSchema';
 import { InvoiceService } from 'src/services/invoice/invoice-service.service';
 import { InvoiceChangeLog } from 'src/entities/invoiceChangeLog.entity';
+import { InvoiceChangeLogService } from 'src/services/invoice-change-log/invoice-change-log.service';
 
+@ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolePermissionGuard)
 @ApiTags('invoice')
 @Controller('invoice')
@@ -92,6 +95,7 @@ export class InvoiceController {
     private userRepo: UserRepository,
     private emailService: EmailService,
     private invoiceChangeLogRepository: InvoiceChangeLogRepository,
+    private invoiceChangeLogService: InvoiceChangeLogService,
   ) {}
 
   @ApiHeader({
@@ -205,6 +209,11 @@ export class InvoiceController {
         organization,
       );
     }
+    const oldInvoices = invoices.map(a => {
+      a.status = invoiceStatus.pending;
+      return a;
+    });
+    this.invoiceChangeLogService.createLogs(oldInvoices);
     return AppResponse.OkSuccess(createInvoices);
   }
 
@@ -603,7 +612,7 @@ export class InvoiceController {
         changeMonth: moment().month(),
         changeYear: moment().year(),
         changeWeekInYear: moment().weeks(),
-        statusFrom: invoice.status,
+        statusFrom: invoiceStatus.paid,
         statusTo: invoice.status,
         invoiceAmount: invoice.amount,
         buyerCode: invoice.createdByOrganization.code,
@@ -616,6 +625,23 @@ export class InvoiceController {
     return AppResponse.OkSuccess(overDueInvoices);
   }
 
+  @AllowPermissions(InvoicePermissions.edit)
+  @Put('settle')
+  async UpdateToSettle() {
+    const invoices = await this.invoiceRepo.find({
+      where: [
+        { status: invoiceStatus.paid },
+        { status: invoiceStatus.overdue },
+      ],
+      relations: ['createdByOrganization', 'createdForOrganization'],
+    });
+    const invoicesBeforeUpdate = invoices;
+    invoices.forEach(a => (a.status = invoiceStatus.settled));
+    await this.invoiceRepo.save(invoices);
+
+    await this.invoiceChangeLogService.createLogs(invoicesBeforeUpdate);
+    return AppResponse.OkSuccess(invoices);
+  }
   @AllowPermissions(InvoicePermissions.view)
   @Get(':invoiceId')
   async GetInvoice(@Param('invoiceId') invoiceId: string) {
@@ -724,21 +750,22 @@ export class InvoiceController {
     const mail = await this.emailService.sendEmail(email).toPromise();
     console.log(mail);
 
-    const changeLog = {
-      invoiceId: updateInvoiceDiscount.id,
-      changeAmount: updateInvoiceDiscount.amount,
-      discountAmount: updateInvoiceDiscount.discountAmount,
-      invoiceNumber: updateInvoiceDiscount.invoiceNumber,
-      changeMonth: moment().month(),
-      changeYear: moment().year(),
-      changeWeekInYear: moment().weeks(),
-      statusFrom: oldChangeInvoice.status,
-      statusTo: invoice.status,
-      invoiceAmount: updateInvoiceDiscount.amount,
-      buyerCode: invoice.createdByOrganization.code,
-      supplierCode: invoice.createdForOrganization.code,
-    } as InvoiceChangeLog;
-    await this.invoiceChangeLogRepository.save(changeLog);
+    // const changeLog = {
+    //   invoiceId: updateInvoiceDiscount.id,
+    //   changeAmount: updateInvoiceDiscount.amount,
+    //   discountAmount: updateInvoiceDiscount.discountAmount,
+    //   invoiceNumber: updateInvoiceDiscount.invoiceNumber,
+    //   changeMonth: moment().month(),
+    //   changeYear: moment().year(),
+    //   changeWeekInYear: moment().weeks(),
+    //   statusFrom: oldChangeInvoice.status,
+    //   statusTo: invoice.status,
+    //   invoiceAmount: updateInvoiceDiscount.amount,
+    //   buyerCode: invoice.createdByOrganization.code,
+    //   supplierCode: invoice.createdForOrganization.code,
+    // } as InvoiceChangeLog;
+    // await this.invoiceChangeLogRepository.save(changeLog);
+    await this.invoiceChangeLogService.createLogs([oldChangeInvoice]);
     return AppResponse.OkSuccess(invoice);
   }
 }
