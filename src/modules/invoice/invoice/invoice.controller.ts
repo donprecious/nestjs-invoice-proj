@@ -650,7 +650,8 @@ export class InvoiceController {
       where: [{ id: invoiceId }],
       relations: ['createdByOrganization', 'createdForOrganization'],
     });
-    if (invoice.status !== invoiceStatus.paid) {
+    const isNotOverdue = invoice.status !== invoiceStatus.overdue;
+    if (invoice.status !== invoiceStatus.paid || isNotOverdue) {
       throw new BadRequestException(
         AppResponse.OkFailure(
           'invoice not update, only invoice with status paid can be updated to settled',
