@@ -635,7 +635,7 @@ export class InvoiceController {
       ],
       relations: ['createdByOrganization', 'createdForOrganization'],
     });
-    const invoicesBeforeUpdate = invoices;
+    const invoicesBeforeUpdate = Object.assign({}, invoices);
     invoices.forEach(a => (a.status = invoiceStatus.settled));
     await this.invoiceRepo.save(invoices);
 
@@ -651,14 +651,14 @@ export class InvoiceController {
       relations: ['createdByOrganization', 'createdForOrganization'],
     });
     const isNotOverdue = invoice.status !== invoiceStatus.overdue;
-    if (invoice.status !== invoiceStatus.paid || isNotOverdue) {
+    if (invoice.status !== invoiceStatus.paid && isNotOverdue) {
       throw new BadRequestException(
         AppResponse.OkFailure(
-          'invoice not update, only invoice with status paid can be updated to settled',
+          'invoice not updated, only invoice with status paid or overdue can be updated to settled',
         ),
       );
     }
-    const invoicesBeforeUpdate = invoice;
+    const invoicesBeforeUpdate = Object.assign({}, invoice);
     invoice.status = invoiceStatus.settled;
     await this.invoiceRepo.save(invoice);
 
@@ -691,7 +691,7 @@ export class InvoiceController {
     if (!invoice) {
       throw new NotFoundException(AppResponse.NotFound('invoice not found'));
     }
-    const oldChangeInvoice = invoice;
+    const oldChangeInvoice = Object.assign({}, invoice);
     invoice.paymentReference = updatePaymentDate.paymentReference;
     invoice.status = invoiceStatus.paid;
 
