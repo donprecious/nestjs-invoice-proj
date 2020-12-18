@@ -13,7 +13,6 @@ async function bootstrap() {
     .setDescription('Frontedge api')
     .setVersion('1.0')
     .addBearerAuth()
-
     .build();
 
   const document = SwaggerModule.createDocument(app, options);

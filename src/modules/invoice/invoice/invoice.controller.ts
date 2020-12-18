@@ -642,6 +642,29 @@ export class InvoiceController {
     await this.invoiceChangeLogService.createLogs(invoicesBeforeUpdate);
     return AppResponse.OkSuccess(invoices);
   }
+
+  @AllowPermissions(InvoicePermissions.edit)
+  @Put('settle/:invoiceId')
+  async UpdateToSettleByInvoiceId(@Param('invoiceId') invoiceId: string) {
+    const invoice = await this.invoiceRepo.findOne({
+      where: [{ id: invoiceId }],
+      relations: ['createdByOrganization', 'createdForOrganization'],
+    });
+    if (invoice.status !== invoiceStatus.paid) {
+      throw new BadRequestException(
+        AppResponse.OkFailure(
+          'invoice not update, only invoice with status paid can be updated to settled',
+        ),
+      );
+    }
+    const invoicesBeforeUpdate = invoice;
+    invoice.status = invoiceStatus.settled;
+    await this.invoiceRepo.save(invoice);
+
+    await this.invoiceChangeLogService.createLogs([invoicesBeforeUpdate]);
+    return AppResponse.OkSuccess(invoice);
+  }
+
   @AllowPermissions(InvoicePermissions.view)
   @Get(':invoiceId')
   async GetInvoice(@Param('invoiceId') invoiceId: string) {
